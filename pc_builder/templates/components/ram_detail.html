@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>{{ ram.manufacturer }} {{ ram.model }}</h2>
+    <p>Объем: {{ ram.capacity }} GB</p>
+    <p>Частота: {{ ram.frequency }} МГц</p>
+    <p>Тип: {{ ram.type }}</p>
+    <p>Цена: {{ ram.price }}</p>
+{% endblock %}

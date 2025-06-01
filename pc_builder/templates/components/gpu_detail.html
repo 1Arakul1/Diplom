@@ -1,0 +1,27 @@
+<!-- components/templates/components/gpu_detail.html -->
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container">
+        <h1>{{ gpu.manufacturer }} {{ gpu.model }}</h1>
+        <div class="row">
+            <div class="col-md-4">
+                {% if gpu.image %}
+                    <img src="" alt="{{ gpu.model }}" class="img-fluid" style="max-width: 100%;">
+                {% else %}
+                    <p>Изображение отсутствует</p>
+                {% endif %}
+            </div>
+            <div class="col-md-8">
+                <p><strong>Производитель:</strong> {{ gpu.manufacturer }}</p>
+                <p><strong>Модель:</strong> {{ gpu.model }}</p>
+                <p><strong>Объем памяти:</strong> {{ gpu.memory }} GB</p>
+                <p><strong>Частота:</strong> {{ gpu.frequency }} ГГц</p>
+                <p><strong>TDP:</strong> {{ gpu.tdp }} Вт</p>
+                <p><strong>Цена:</strong> {{ gpu.price }} руб.</p>
+                <!-- Добавьте другие характеристики видеокарты, если они есть в вашей модели -->
+            </div>
+        </div>
+        <a href="{% url 'components:gpu_list' %}" class="btn btn-secondary mt-3">Вернуться к списку видеокарт</a>
+    </div>
+{% endblock %}

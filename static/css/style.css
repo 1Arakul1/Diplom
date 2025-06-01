@@ -1,0 +1,88 @@
+/* static/css/style.css */
+
+body {
+    font-family: sans-serif;
+    background-color: #f0f0f0;
+}
+
+nav {
+    background-color: #333;
+    color: white;
+    padding: 10px;
+    display: flex; /* Используем flexbox */
+    justify-content: space-between; /* Распределяем пространство между элементами */
+    align-items: center; /* Выравниваем элементы по вертикали */
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin-right: 10px;
+}
+
+nav div {
+    float: right; /* Устаревший способ, лучше использовать flexbox */
+}
+
+/* Стили для выпадающего меню (Bootstrap style) */
+.dropdown-menu {
+    background-color: #fff;
+    border: 1px solid rgba(0,0,0,.15);
+    box-shadow: 0 3px 6px rgba(0,0,0,.175);
+    padding: 0; /* Убираем отступы по умолчанию */
+    min-width: 10rem; /* Увеличьте ширину меню */
+}
+
+.dropdown-item {
+    color: #212529; /* Темный цвет текста */
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    display: block;
+    clear: both;
+    font-weight: 400;
+    text-align: inherit;
+    white-space: nowrap;
+    background-color: transparent;
+    border: 0;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa; /* Светлый фон при наведении */
+    color: #212529;
+}
+
+/* --- Стили для карточек (карточки компонентов) --- */
+
+.cpu-card,
+.gpu-card,
+.motherboard-card,
+.ram-card,
+.storage-card,
+.psu-card,
+.case-card {
+    border: 1px solid #ccc; /* Добавляем границу */
+    height: 400px; /* Фиксированная высота карточки */
+    display: flex; /* Используем flexbox для выравнивания содержимого */
+    flex-direction: column; /* Размещаем элементы вертикально */
+}
+
+.card-img-top {
+    height: 200px; /* Фиксированная высота изображения */
+    object-fit: contain; /* Масштабируем изображение, чтобы поместилось в контейнер */
+    margin-bottom: 15px;
+}
+
+.card-body {
+    flex-grow: 1; /* Занимаем все доступное пространство по вертикали */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Равномерно распределяем пространство между элементами */
+}
+
+.card-title {
+    margin-bottom: 0.5rem;
+}
+
+.card-text {
+    margin-bottom: 1rem;
+}

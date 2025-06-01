@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>{{ motherboard.manufacturer }} {{ motherboard.model }}</h2>
+    <p>Форм-фактор: {{ motherboard.form_factor }}</p>
+    <p>Сокет: {{ motherboard.socket }}</p>
+    <p>Чипсет: {{ motherboard.chipset }}</p>
+    <p>Слоты для RAM: {{ motherboard.ram_slots }}</p>
+    <p>Тип RAM: {{ motherboard.ram_type }}</p>
+    <p>Цена: {{ motherboard.price }}</p>
+{% endblock %}

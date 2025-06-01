@@ -1,0 +1,18 @@
+<!-- builds/templates/builds/build_detail.html -->
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Сборка {{ build.pk }}</h2>
+    <p>Процессор: <a href="{% url 'components:cpu_detail' build.cpu.pk %}">{{ build.cpu.manufacturer }} {{ build.cpu.model }}</a></p>
+    <p>Видеокарта: <a href="{% url 'components:gpu_detail' build.gpu.pk %}">{{ build.gpu.manufacturer }} {{ build.gpu.model }}</a></p>
+    <p>Материнская плата: <a href="{% url 'components:motherboard_detail' build.motherboard.pk %}">{{ build.motherboard.manufacturer }} {{ build.motherboard.model }}</a></p>
+    <p>Оперативная память: <a href="{% url 'components:ram_detail' build.ram.pk %}">{{ build.ram.manufacturer }} {{ build.ram.model }}</a></p>
+    <p>Накопитель: <a href="{% url 'components:storage_detail' build.storage.pk %}">{{ build.storage.manufacturer }} {{ build.storage.model }}</a></p>
+    <p>Блок питания: <a href="{% url 'components:psu_detail' build.psu.pk %}">{{ build.psu.manufacturer }} {{ build.psu.model }}</a></p>
+    <p>Корпус: <a href="{% url 'components:case_detail' build.case.pk %}">{{ build.case.manufacturer }} {{ build.case.model }}</a></p>
+    <p>Общая стоимость: {{ build.total_price }}</p>
+
+    <a href="{% url 'games:predict_fps' %}?cpu={{ build.cpu.pk }}&gpu={{ build.gpu.pk }}">
+        Проверить, какие игры потянет эта сборка
+    </a>
+{% endblock %}

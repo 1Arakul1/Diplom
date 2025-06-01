@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>{{ psu.manufacturer }} {{ psu.model }}</h2>
+    <p>Мощность: {{ psu.power }} Вт</p>
+    <p>Сертификация: {{ psu.certification }}</p>
+    <p>Цена: {{ psu.price }}</p>
+{% endblock %}

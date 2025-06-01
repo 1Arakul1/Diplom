@@ -1,0 +1,18 @@
+<!-- pc_builder/templates/index.html -->
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Добро пожаловать на сайт сборки компьютеров!</h2>
+
+    {% if user.is_authenticated %}
+        <p>Привет, {{ user.username }}!</p>
+        <p>Вы можете <a href="{% url 'users:logout' %}">выйти</a>.</p>
+    {% else %}
+        <p>Пожалуйста, <a href="{% url 'users:register' %}">зарегистрируйтесь</a> или <a href="{% url 'users:login' %}">войдите</a>.</p>
+    {% endif %}
+
+    <h3>Список компонентов</h3>
+    <p><a href="{% url 'components:cpu_list' %}">Процессоры</a></p>
+    <p><a href="">Видеокарты</a></p>
+    <!-- Добавь ссылки на другие компоненты -->
+{% endblock %}

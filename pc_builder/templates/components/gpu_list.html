@@ -1,0 +1,78 @@
+<!-- components/templates/components/gpu_list.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+    <h2>Список видеокарт</h2>
+
+    <!-- Форма поиска -->
+    <form method="get" class="mb-3">
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="Поиск видеокарты..." name="q" value="{% if query %}{{ query }}{% endif %}">
+            <div class="input-group-append">
+                <button class="btn btn-outline-secondary" type="submit">Поиск</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="row">  <!-- Контейнер для карточек (сетка) -->
+        {% for gpu in gpus %}
+            <div class="col-md-4">  <!-- Каждая карточка занимает 4 колонки (3 в ряд) -->
+                <div class="card mb-4 gpu-card">  <!-- Добавлен класс gpu-card -->
+                    {% if gpu.image %}
+                        <img src="{{ gpu.image.url }}" class="card-img-top" alt="{{ gpu.model }}" style="object-fit: contain;">
+                    {% else %}
+                        <img src="{{ gpu.image.url }}" class="card-img-top" alt="No Image" style="object-fit: contain;">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ gpu.manufacturer }} {{ gpu.model }}</h5>
+                        <p class="card-text">
+                            <strong>Объем памяти:</strong> {{ gpu.memory }} GB<br>
+                            <strong>Цена:</strong> {{ gpu.price }}
+                        </p>
+                        <a href="{% url 'components:gpu_detail' gpu.pk %}" class="btn btn-primary btn-sm">Подробнее</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Пагинация -->
+    {% if gpus.has_other_pages %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if gpus.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?q={{ query }}&page={{ gpus.previous_page_number }}" aria-label="Предыдущая">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link" aria-hidden="true">&laquo;</span>
+                    </li>
+                {% endif %}
+
+                {% for num in gpus.paginator.page_range %}
+                    {% if gpus.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }} <span class="sr-only">(current)</span></span></li>
+                    {% else %}
+                        <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ num }}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if gpus.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?q={{ query }}&page={{ gpus.next_page_number }}" aria-label="Следующая">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link" aria-hidden="true">&raquo;</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+{% endblock %}

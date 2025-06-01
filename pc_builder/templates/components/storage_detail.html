@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>{{ storage.manufacturer }} {{ storage.model }}</h2>
+    <p>Объем: {{ storage.capacity }}</p>
+    <p>Тип: {{ storage.type }}</p>
+    <p>Интерфейс: {{ storage.interface }}</p>
+    <p>Скорость чтения: {{ storage.read_speed }} МБ/с</p>
+    <p>Скорость записи: {{ storage.write_speed }} МБ/с</p>
+    <p>Цена: {{ storage.price }}</p>
+{% endblock %}

@@ -1,0 +1,23 @@
+<!-- templates/users/profile.html -->
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Профиль пользователя</h2>
+    <p>Имя пользователя: {{ user.username }}</p>
+    <p>Email: {{ user.email }}</p>
+
+    <h3>Ваши сборки:</h3>
+    {% if builds %}
+        <ul>
+            {% for build in builds %}
+                <li>
+                    <a href="{% url 'builds:build_detail' build.pk %}">
+                        Сборка {{ build.pk }} ({{ build.cpu.manufacturer }} {{ build.cpu.model }})
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Вы пока не создали ни одной сборки.</p>
+    {% endif %}
+{% endblock %}

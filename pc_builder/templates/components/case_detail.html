@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>{{ case.manufacturer }} {{ case.model }}</h2>
+    <p>Форм-фактор: {{ case.form_factor }}</p>
+    <p>Размеры: {{ case.dimensions }}</p>
+    <p>Цена: {{ case.price }}</p>
+{% endblock %}

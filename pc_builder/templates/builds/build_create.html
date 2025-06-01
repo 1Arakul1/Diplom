@@ -1,0 +1,66 @@
+<!-- builds/templates/builds/build_create.html -->
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Создать новую сборку</h2>
+    <form method="post">
+        {% csrf_token %}
+        <label for="cpu">Процессор:</label>
+        <select name="cpu" id="cpu">
+            {% for cpu in cpus %}
+                <option value="{{ cpu.pk }}">{{ cpu.manufacturer }} {{ cpu.model }}</option>
+            {% endfor %}
+        </select>
+        <br>
+
+        <label for="gpu">Видеокарта:</label>
+        <select name="gpu" id="gpu">
+            {% for gpu in gpus %}
+                <option value="{{ gpu.pk }}">{{ gpu.manufacturer }} {{ gpu.model }}</option>
+            {% endfor %}
+        </select>
+        <br>
+  
+  <label for="motherboard">Материнская плата:</label>
+        <select name="motherboard" id="motherboard">
+            {% for motherboard in motherboards %}
+                <option value="{{ motherboard.pk }}">{{ motherboard.manufacturer }} {{ motherboard.model }}</option>
+            {% endfor %}
+        </select>
+        <br>
+
+  <label for="ram">Оперативная память:</label>
+        <select name="ram" id="ram">
+            {% for ram in rams %}
+                <option value="{{ ram.pk }}">{{ ram.manufacturer }} {{ ram.model }}</option>
+            {% endfor %}
+        </select>
+        <br>
+
+        <label for="storage">Накопитель:</label>
+        <select name="storage" id="storage">
+            {% for storage in storages %}
+                <option value="{{ storage.pk }}">{{ storage.manufacturer }} {{ storage.model }}</option>
+            {% endfor %}
+        </select>
+        <br>
+
+        <label for="psu">Блок питания:</label>
+        <select name="psu" id="psu">
+            {% for psu in psus %}
+                <option value="{{ psu.pk }}">{{ psu.manufacturer }} {{ psu.model }}</option>
+            {% endfor %}
+        </select>
+        <br>
+
+   <label for="case">Корпус:</label>
+        <select name="case" id="case">
+            {% for case in cases %}
+                <option value="{{ case.pk }}">{{ case.manufacturer }} {{ case.model }}</option>
+            {% endfor %}
+        </select>
+        <br>
+
+        <button type="submit">Создать</button>
+    </form>
+{% endblock %}
