@@ -9,6 +9,27 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
+    <!-- Loading Spinner -->
+    <div class="db-app-loading" id="loading-overlay" style="display: none;">
+        <!-- Первый вариант (gooey) -->
+        <!--
+        <div class="gooey">
+            <div class="dot"></div>
+            <div class="dots">
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        -->
+
+        <!-- Второй вариант (spinner) -->
+        <div class="db-loading-spinner">
+            <div class="db-loading-spinner__double-bounce"></div>
+            <div class="db-loading-spinner__double-bounce"></div>
+        </div>
+    </div>
+    <!-- End Loading Spinner -->
+
     <header>
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
             <a class="navbar-brand" href="/">Главная</a>
@@ -55,6 +76,14 @@
                             <a class="nav-link" href="{% url 'users:register' %}">Зарегистрироваться</a>
                         </li>
                     {% endif %}
+                     <li class="nav-item">
+                        <a class="nav-link" href="{% url 'builds:cart' %}">
+                            Корзина
+                            {% if cart_items %}
+                                <span class="badge badge-light"> {{ cart_items|length }}</span>  <!-- отображаем количество элементов -->
+                            {% endif %}
+                        </a>
+                    </li>
                 </ul>
             </div>
         </nav>
@@ -64,8 +93,43 @@
         {% block content %}{% endblock %}
     </div>
 
+    <!-- Подключение jQuery (ОБЯЗАТЕЛЬНО) -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    <script>
+        console.log('Скрипт начал работу!');
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOMContentLoaded событие произошло!');
+            try {
+                document.getElementById('loading-overlay').classList.remove('db-app-loading--visible');
+            } catch (error) {
+                console.error('Ошибка в DOMContentLoaded:', error);
+            }
+        });
+    </script>
+    <script>
+        function showLoading() {
+            console.log('showLoading() вызвана!');
+            try {
+                 document.getElementById('loading-overlay').classList.add('db-app-loading--visible');
+            } catch (error) {
+                console.error('Ошибка в showLoading():', error);
+            }
+        }
+
+        function hideLoading() {
+            console.log('hideLoading() вызвана!');
+            setTimeout(function() {
+                try {
+                    document.getElementById('loading-overlay').classList.remove('db-app-loading--visible');
+                } catch (error) {
+                     console.error('Ошибка в setTimeout:', error);
+                }
+            }, 10000);
+        }
+    </script>
 </body>
 </html>

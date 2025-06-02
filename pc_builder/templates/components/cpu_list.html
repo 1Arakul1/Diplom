@@ -1,5 +1,6 @@
 <!-- components/templates/components/cpu_list.html -->
 {% extends "base.html" %}
+
 {% load static %}
 
 {% block content %}
@@ -15,10 +16,10 @@
         </div>
     </form>
 
-    <div class="row">  <!-- Контейнер для карточек (сетка) -->
+    <div class="row">
         {% for cpu in cpus %}
-            <div class="col-md-4">  <!-- Каждая карточка занимает 4 колонки (3 в ряд) -->
-                <div class="card mb-4 cpu-card">  <!-- Добавлен класс cpu-card -->
+            <div class="col-md-4">
+                <div class="card mb-4 cpu-card">
                     {% if cpu.image %}
                         <img src="{{ cpu.image.url }}" class="card-img-top" alt="{{ cpu.model }}" style="object-fit: contain;">
                     {% else %}
@@ -27,7 +28,7 @@
                     <div class="card-body">
                         <h5 class="card-title">{{ cpu.manufacturer }} {{ cpu.model }}</h5>
                         <p class="card-text">
-                            <strong>Частота:</strong> {{ cpu.frequency }} GHz<br>
+                            <strong>Частота:</strong> {{ cpu.clock_speed }} GHz<br>
                             <strong>Ядер:</strong> {{ cpu.cores }}<br>
                             <strong>Цена:</strong> {{ cpu.price }}
                         </p>
@@ -76,4 +77,13 @@
             </ul>
         </nav>
     {% endif %}
+    <script>
+        // Показать спиннер при загрузке страницы
+        showLoading();
+
+        // Скрыть спиннер после загрузки контента (например, после загрузки изображений)
+        window.addEventListener('load', function() {
+            hideLoading();
+        });
+    </script>
 {% endblock %}

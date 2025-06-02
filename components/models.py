@@ -151,3 +151,25 @@ class Case(models.Model):
     class Meta:
         verbose_name = "Корпус"
         verbose_name_plural = "Корпуса"
+
+from django.contrib.auth.models import User # Импортируем модель User
+
+class Build(models.Model):
+    """Сборка компьютера."""
+    name = models.CharField(max_length=255, verbose_name="Название сборки", blank=True, null=True) #Добавил поле название сборки
+    cpu = models.ForeignKey(CPU, on_delete=models.CASCADE, verbose_name="Процессор", related_name='builds')
+    motherboard = models.ForeignKey(Motherboard, on_delete=models.CASCADE, verbose_name="Материнская плата", blank=True, null=True, related_name='builds')
+    ram = models.ForeignKey(RAM, on_delete=models.CASCADE, verbose_name="Оперативная память", blank=True, null=True, related_name='builds')
+    gpu = models.ForeignKey(GPU, on_delete=models.CASCADE, verbose_name="Видеокарта", blank=True, null=True, related_name='builds')
+    storage = models.ForeignKey(Storage, on_delete=models.CASCADE, verbose_name="Накопитель", blank=True, null=True, related_name='builds')
+    psu = models.ForeignKey(PSU, on_delete=models.CASCADE, verbose_name="Блок питания", blank=True, null=True, related_name='builds')
+    case = models.ForeignKey(Case, on_delete=models.CASCADE, verbose_name="Корпус", blank=True, null=True, related_name='builds')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Пользователь", related_name='builds', blank=True, null=True)
+
+    def __str__(self):
+        return f"Сборка {self.pk} - {self.cpu.model if self.cpu else 'Без CPU'}"
+
+    class Meta:
+        verbose_name = "Сборка"
+        verbose_name_plural = "Сборки"
+

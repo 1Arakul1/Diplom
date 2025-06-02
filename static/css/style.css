@@ -24,17 +24,19 @@ nav div {
     float: right; /* Устаревший способ, лучше использовать flexbox */
 }
 
+/* static/css/style.css */
+
 /* Стили для выпадающего меню (Bootstrap style) */
 .dropdown-menu {
     background-color: #fff;
     border: 1px solid rgba(0,0,0,.15);
     box-shadow: 0 3px 6px rgba(0,0,0,.175);
-    padding: 0; /* Убираем отступы по умолчанию */
-    min-width: 10rem; /* Увеличьте ширину меню */
+    padding: 0;
+    min-width: 10rem;
 }
 
 .dropdown-item {
-    color: #212529; /* Темный цвет текста */
+    color: #212529;
     padding: 0.5rem 1rem;
     text-decoration: none;
     display: block;
@@ -47,7 +49,7 @@ nav div {
 }
 
 .dropdown-item:hover {
-    background-color: #f8f9fa; /* Светлый фон при наведении */
+    background-color: #f8f9fa;
     color: #212529;
 }
 
@@ -60,23 +62,23 @@ nav div {
 .storage-card,
 .psu-card,
 .case-card {
-    border: 1px solid #ccc; /* Добавляем границу */
-    height: 400px; /* Фиксированная высота карточки */
-    display: flex; /* Используем flexbox для выравнивания содержимого */
-    flex-direction: column; /* Размещаем элементы вертикально */
+    border: 1px solid #ccc;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
 }
 
 .card-img-top {
-    height: 200px; /* Фиксированная высота изображения */
-    object-fit: contain; /* Масштабируем изображение, чтобы поместилось в контейнер */
+    height: 200px;
+    object-fit: contain;
     margin-bottom: 15px;
 }
 
 .card-body {
-    flex-grow: 1; /* Занимаем все доступное пространство по вертикали */
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* Равномерно распределяем пространство между элементами */
+    justify-content: space-between;
 }
 
 .card-title {
@@ -85,4 +87,166 @@ nav div {
 
 .card-text {
     margin-bottom: 1rem;
+}
+
+/* === Loading Spinner Styles === */
+
+/* Основные стили спиннера (скрыт по умолчанию) */
+.db-app-loading {
+    display: none; /* Скрыт по умолчанию */
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 0; right: 0; bottom: 0; left: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    color: #231f20;
+    font-family: sans-serif;
+    z-index: 1000;
+}
+
+/* Класс для отображения спиннера (добавляется JavaScript) */
+.db-app-loading.db-app-loading--visible {
+    display: flex;  /*  Чтобы спиннер был видимым */
+}
+
+/* Gooey Spinner (опционально) */
+.gooey {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 142px;
+    height: 40px;
+    margin: -20px 0 0 -71px;
+    background: white;
+    filter: contrast(20);
+}
+
+.gooey .dot {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 12px;
+    left: 15px;
+    filter: blur(4px);
+    background: #000;
+    border-radius: 50%;
+    transform: translateX(0);
+    animation: dot 2.8s infinite;
+}
+
+.gooey .dots {
+    transform: translateX(0);
+    margin-top: 12px;
+    margin-left: 31px;
+    animation: dots 2.8s infinite;
+}
+
+.gooey .dots span {
+    display: block;
+    float: left;
+    width: 16px;
+    height: 16px;
+    margin-left: 16px;
+    filter: blur(4px);
+    background: #000;
+    border-radius: 50%;
+}
+
+@keyframes dot {
+    50% {
+        transform: translateX(96px);
+    }
+}
+
+@keyframes dots {
+    50% {
+        transform: translateX(-31px);
+    }
+}
+
+/* Spinner (Два кружка) */
+.db-loading-spinner {
+    display: inline-block;
+    line-height: 0;
+    width: 75px;
+    height: 75px;
+    position: relative;
+}
+
+.db-loading-spinner__double-bounce {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: #2160b5;
+    opacity: 0.5;
+    position: absolute;
+    top: 0;
+    left: 0;
+    animation: double-bounce 2.0s infinite ease-in-out;
+}
+
+.db-loading-spinner__double-bounce:last-child {
+    animation-delay: -1.0s;
+}
+
+@keyframes double-bounce {
+    0%, 100% {
+        transform: scale(0.0);
+    }
+    50% {
+        transform: scale(1.0);
+    }
+}
+
+/* static/css/style.css */
+/* ... (Ваши существующие стили) ... */
+
+/* Стили для карточек сборок */
+.build-card {
+    border: 1px solid #ccc;
+    height: 100%;  /* Занимает всю высоту родительского элемента */
+    display: flex;
+    flex-direction: column;
+}
+
+.card-img-top {
+    object-fit: cover;  /*  Изображение заполнит всю область, обрезая края, если необходимо */
+    height: 200px;   /*  Фиксированная высота для изображений корпусов */
+}
+
+.card-body {
+    flex-grow: 1;  /*  Разрешаем содержимому заполнять оставшееся пространство */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;  /*  Размещаем элементы равномерно по высоте */
+}
+
+.card-title {
+    margin-bottom: 0.5rem;
+}
+
+.card-text {
+    margin-bottom: 1rem;
+}
+
+/* Стили для мини-карточек компонентов в build_detail */
+.component-card {
+    border: 1px solid #ccc;
+    height: 250px;  /*  Фиксированная высота */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /*  Чтобы контент не выходил за пределы */
+}
+
+.component-image {
+    object-fit: cover;  /*  Заполняем пространство */
+    height: 150px;  /*  Высота изображений */
+}
+
+.component-card .card-body {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /*  Выравнивание по центру по вертикали */
+    padding: 0.5rem;
 }

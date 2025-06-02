@@ -71,7 +71,9 @@ ROOT_URLCONF = 'pc_builder.urls'  # Убедись, что это правиль
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # Важно! Укажите путь к директории с шаблонами
+        'DIRS': [
+            BASE_DIR / 'templates',  # <--- Это строка важна. Должна указывать на вашу папку templates.
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -145,7 +147,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Путь к папке для с
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-LOGIN_URL = 'users:user_login'
+# settings.py
+LOGIN_URL = 'users:login' #  Используем имя URL из urls.py приложения users
 LOGIN_REDIRECT_URL = '/'  # Или другое значение
 AUTH_USER_MODEL = 'auth.User'
 # settings.py

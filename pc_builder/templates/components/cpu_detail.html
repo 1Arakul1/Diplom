@@ -7,7 +7,7 @@
         <div class="row">
             <div class="col-md-4">
                 {% if cpu.image %}
-                    <img src="" alt="{{ cpu.model }}" class="img-fluid" style="max-width: 100%;">
+                    <img src="{{ cpu.image.url }}" alt="{{ cpu.model }}" class="img-fluid" style="max-width: 100%;">  <!-- Исправлено: используем .url -->
                 {% else %}
                     <p>Изображение отсутствует</p>
                 {% endif %}
@@ -21,8 +21,65 @@
                 <p><strong>Сокет:</strong> {{ cpu.socket }}</p>
                 <p><strong>Цена:</strong> {{ cpu.price }} руб.</p>
                 <!-- Добавьте другие характеристики процессора, если они есть в вашей модели -->
+                <p>component_type: cpu</p>
+                <p>component_id: {{ cpu.pk }}</p>
+                <form id="add-to-cart-form" method="post" action="{% url 'builds:add_to_cart' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="component_type" value="cpu">
+                    <input type="hidden" name="component_id" value="{{ cpu.pk }}">
+                    <div class="form-group">
+                        <label for="quantity">Количество:</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" value="1" min="1">
+                    </div>
+                    <button type="submit" class="btn btn-success">Добавить в корзину</button>
+                </form>
+                <div id="add-to-cart-message"></div>  <!-- Контейнер для сообщения -->
             </div>
         </div>
         <a href="{% url 'components:cpu_list' %}" class="btn btn-secondary mt-3">Вернуться к списку процессоров</a>
     </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#add-to-cart-form').submit(function(event) {
+                event.preventDefault();  // Предотвращаем обычную отправку формы
+
+                var form = $(this);
+                var url = form.data('url');
+
+                $.ajax({
+                    type: "POST",
+                    url: url,
+                    data: form.serialize(),  // Сериализуем данные формы
+                    dataType: 'json', // Указываем, что ожидаем JSON
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            // Показываем сообщение об успехе
+                            $('#add-to-cart-message').html('<div class="alert alert-success">' + response.message + '</div>');
+
+                            // Опционально: Обновляем содержимое корзины на странице (если нужно)
+
+                            // Через 3 секунды скрываем сообщение
+                            setTimeout(function() {
+                                $('#add-to-cart-message').empty();
+                            }, 3000);
+                        } else {
+                            // Показываем сообщение об ошибке
+                            $('#add-to-cart-message').html('<div class="alert alert-danger">' + response.message + '</div>');
+                            setTimeout(function() {
+                                $('#add-to-cart-message').empty();
+                            }, 3000);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        // Обработка ошибок AJAX (например, проблемы с сервером)
+                        $('#add-to-cart-message').html('<div class="alert alert-danger">Произошла ошибка при добавлении в корзину.</div>');
+                        setTimeout(function() {
+                            $('#add-to-cart-message').empty();
+                        }, 3000);
+                    }
+                });
+            });
+        });
+    </script>
 {% endblock %}

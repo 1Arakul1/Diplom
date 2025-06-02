@@ -1,62 +1,85 @@
 <!-- builds/templates/builds/build_create.html -->
 {% extends "base.html" %}
-
 {% block content %}
     <h2>Создать новую сборку</h2>
+    {% if error_message %}
+        <p style="color: red;">{{ error_message }}</p>
+    {% endif %}
+
+    {% if form.errors %}
+        <div style="color: red;">
+            <p>Пожалуйста, исправьте ошибки:</p>
+            <ul>
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <li>{{ field }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
     <form method="post">
         {% csrf_token %}
         <label for="cpu">Процессор:</label>
         <select name="cpu" id="cpu">
+            <option value="">---------</option>  <!-- Добавляем пустой option -->
             {% for cpu in cpus %}
-                <option value="{{ cpu.pk }}">{{ cpu.manufacturer }} {{ cpu.model }}</option>
+                <option value="{{ cpu.pk }}" {% if cpu.pk == request.POST.cpu|safe|default:""|add:"0" %}selected{% endif %}>{{ cpu.manufacturer }} {{ cpu.model }}</option>
             {% endfor %}
         </select>
         <br>
-
+        <!-- ... (аналогично для других компонентов) ... -->
         <label for="gpu">Видеокарта:</label>
         <select name="gpu" id="gpu">
+            <option value="">---------</option>
             {% for gpu in gpus %}
-                <option value="{{ gpu.pk }}">{{ gpu.manufacturer }} {{ gpu.model }}</option>
-            {% endfor %}
-        </select>
-        <br>
-  
-  <label for="motherboard">Материнская плата:</label>
-        <select name="motherboard" id="motherboard">
-            {% for motherboard in motherboards %}
-                <option value="{{ motherboard.pk }}">{{ motherboard.manufacturer }} {{ motherboard.model }}</option>
+                <option value="{{ gpu.pk }}" {% if gpu.pk == request.POST.gpu|safe|default:""|add:"0" %}selected{% endif %}>{{ gpu.manufacturer }} {{ gpu.model }}</option>
             {% endfor %}
         </select>
         <br>
 
-  <label for="ram">Оперативная память:</label>
+        <label for="motherboard">Материнская плата:</label>
+        <select name="motherboard" id="motherboard">
+            <option value="">---------</option>
+            {% for motherboard in motherboards %}
+                <option value="{{ motherboard.pk }}" {% if motherboard.pk == request.POST.motherboard|safe|default:""|add:"0" %}selected{% endif %}>{{ motherboard.manufacturer }} {{ motherboard.model }}</option>
+            {% endfor %}
+        </select>
+        <br>
+
+        <label for="ram">Оперативная память:</label>
         <select name="ram" id="ram">
+            <option value="">---------</option>
             {% for ram in rams %}
-                <option value="{{ ram.pk }}">{{ ram.manufacturer }} {{ ram.model }}</option>
+                <option value="{{ ram.pk }}" {% if ram.pk == request.POST.ram|safe|default:""|add:"0" %}selected{% endif %}>{{ ram.manufacturer }} {{ ram.model }}</option>
             {% endfor %}
         </select>
         <br>
 
         <label for="storage">Накопитель:</label>
         <select name="storage" id="storage">
+            <option value="">---------</option>
             {% for storage in storages %}
-                <option value="{{ storage.pk }}">{{ storage.manufacturer }} {{ storage.model }}</option>
+                <option value="{{ storage.pk }}" {% if storage.pk == request.POST.storage|safe|default:""|add:"0" %}selected{% endif %}>{{ storage.manufacturer }} {{ storage.model }}</option>
             {% endfor %}
         </select>
         <br>
 
         <label for="psu">Блок питания:</label>
         <select name="psu" id="psu">
+            <option value="">---------</option>
             {% for psu in psus %}
-                <option value="{{ psu.pk }}">{{ psu.manufacturer }} {{ psu.model }}</option>
+                <option value="{{ psu.pk }}" {% if psu.pk == request.POST.psu|safe|default:""|add:"0" %}selected{% endif %}>{{ psu.manufacturer }} {{ psu.model }}</option>
             {% endfor %}
         </select>
         <br>
 
-   <label for="case">Корпус:</label>
+        <label for="case">Корпус:</label>
         <select name="case" id="case">
+            <option value="">---------</option>
             {% for case in cases %}
-                <option value="{{ case.pk }}">{{ case.manufacturer }} {{ case.model }}</option>
+                <option value="{{ case.pk }}" {% if case.pk == request.POST.case|safe|default:""|add:"0" %}selected{% endif %}>{{ case.manufacturer }} {{ case.model }}</option>
             {% endfor %}
         </select>
         <br>

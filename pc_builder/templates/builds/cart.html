@@ -1,0 +1,106 @@
+<!-- builds/templates/builds/cart.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+    <h2>Корзина</h2>
+
+    {% if cart_items %}
+        <div class="row">
+            <div class="col-md-12">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Товар</th>
+                            <th>Количество</th>
+                            <th>Цена</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in cart_items %}
+                            <tr>
+                                <td>
+                                    {% if item.build %}
+                                        Сборка #{{ item.build.pk }}
+                                    {% elif item.cpu %}
+                                        Процессор: {{ item.cpu.manufacturer }} {{ item.cpu.model }}
+                                        {% if item.cpu.image %}
+                                            <img src="{{ item.cpu.image.url }}" alt="{{ item.cpu.model }}" style="width: 50px;">
+                                        {% endif %}
+                                    {% elif item.gpu %}
+                                        Видеокарта: {{ item.gpu.manufacturer }} {{ item.gpu.model }}
+                                        {% if item.gpu.image %}
+                                            <img src="" alt="{{ item.gpu.model }}" style="width: 50px;">
+                                        {% endif %}
+                                    {% elif item.motherboard %}
+                                        Материнская плата: {{ item.motherboard.manufacturer }} {{ item.motherboard.model }}
+                                        {% if item.motherboard.image %}
+                                            <img src="" alt="{{ item.motherboard.model }}" style="width: 50px;">
+                                        {% endif %}
+                                    {% elif item.ram %}
+                                        Оперативная память: {{ item.ram.manufacturer }} {{ item.ram.model }}
+                                        {% if item.ram.image %}
+                                            <img src="" alt="{{ item.ram.model }}" style="width: 50px;">
+                                        {% endif %}
+                                    {% elif item.storage %}
+                                        Накопитель: {{ item.storage.manufacturer }} {{ item.storage.model }}
+                                        {% if item.storage.image %}
+                                            <img src="" alt="{{ item.storage.model }}" style="width: 50px;">
+                                        {% endif %}
+                                    {% elif item.psu %}
+                                        Блок питания: {{ item.psu.manufacturer }} {{ item.psu.model }}
+                                        {% if item.psu.image %}
+                                            <img src="" alt="{{ item.psu.model }}" style="width: 50px;">
+                                        {% endif %}
+                                    {% elif item.case %}
+                                        Корпус: {{ item.case.manufacturer }} {{ item.case.model }}
+                                        {% if item.case.image %}
+                                            <img src="" alt="{{ item.case.model }}" style="width: 50px;">
+                                        {% endif %}
+                                    {% else %}
+                                        Неизвестный товар
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.quantity }}</td>
+                                <td>
+                                    {% if item.build %}
+                                        {{ item.build.total_price | floatformat:2 }}
+                                    {% elif item.cpu %}
+                                        {{ item.cpu.price | floatformat:2 }}
+                                    {% elif item.gpu %}
+                                        {{ item.gpu.price | floatformat:2 }}
+                                    {% elif item.motherboard %}
+                                        {{ item.motherboard.price | floatformat:2 }}
+                                    {% elif item.ram %}
+                                        {{ item.ram.price | floatformat:2 }}
+                                    {% elif item.storage %}
+                                        {{ item.storage.price | floatformat:2 }}
+                                    {% elif item.psu %}
+                                        {{ item.psu.price | floatformat:2 }}
+                                    {% elif item.case %}
+                                        {{ item.case.price | floatformat:2 }}
+                                    {% else %}
+                                        0.00
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'builds:remove_from_cart' item.pk %}" class="btn btn-danger btn-sm">Удалить</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12 text-right">
+                <p>Общая стоимость: {{ total_price | floatformat:2 }}</p>
+                <a href="{% url 'builds:checkout' %}" class="btn btn-success">Оформить заказ</a>  <!-- Добавлена кнопка -->
+            </div>
+        </div>
+    {% else %}
+        <p>Ваша корзина пуста.</p>
+    {% endif %}
+{% endblock %}

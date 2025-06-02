@@ -1,16 +1,69 @@
-<!-- builds/templates/builds/build_list.html -->
+<!-- build_list.html -->
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
     <h2>Список сборок</h2>
-    <a href="{% url 'builds:build_create' %}">Создать новую сборку</a>
-    <ul>
+    <a href="{% url 'builds:build_create' %}" class="btn btn-primary mb-3">Создать новую сборку</a>  <!-- Кнопка создания -->
+
+    <div class="row">
         {% for build in builds %}
-            <li>
-                <a href="{% url 'builds:build_detail' build.pk %}">
-                    Сборка {{ build.pk }} ({{ build.cpu.manufacturer }} {{ build.cpu.model }})
-                </a>
-            </li>
+            <div class="col-md-4">
+                <div class="card mb-4 build-card">
+                    {% if build.case.image %}
+                        <img src="{{ build.case.image.url }}" class="card-img-top" alt="{{ build.case.model }}" style="object-fit: contain;">
+                    {% else %}
+                        <img src="{{ build.case.image.url }}" class="card-img-top" alt="No Image" style="object-fit: contain;">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">Сборка {{ build.pk }}</h5>
+                        <p class="card-text">
+                            <strong>Процессор:</strong> {{ build.cpu.manufacturer }} {{ build.cpu.model }}<br>
+                            <!-- Добавьте другие компоненты, которые хотите отобразить -->
+                        </p>
+                        <a href="{% url 'builds:build_detail' build.pk %}" class="btn btn-primary btn-sm">Подробнее</a> <!-- Ссылка на детализацию -->
+                    </div>
+                </div>
+            </div>
         {% endfor %}
-    </ul>
+    </div>
+
+    <!-- Пагинация -->
+    {% if builds.has_other_pages %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if builds.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ builds.previous_page_number }}" aria-label="Предыдущая">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link" aria-hidden="true">&laquo;</span>
+                    </li>
+                {% endif %}
+
+                {% for num in builds.paginator.page_range %}
+                    {% if builds.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }} <span class="sr-only">(current)</span></span></li>
+                    {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if builds.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ builds.next_page_number }}" aria-label="Следующая">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link" aria-hidden="true">&raquo;</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
 {% endblock %}

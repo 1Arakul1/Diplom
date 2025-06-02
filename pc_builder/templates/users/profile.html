@@ -6,18 +6,64 @@
     <p>Имя пользователя: {{ user.username }}</p>
     <p>Email: {{ user.email }}</p>
 
-    <h3>Ваши сборки:</h3>
-    {% if builds %}
-        <ul>
-            {% for build in builds %}
-                <li>
-                    <a href="{% url 'builds:build_detail' build.pk %}">
-                        Сборка {{ build.pk }} ({{ build.cpu.manufacturer }} {{ build.cpu.model }})
-                    </a>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>Вы пока не создали ни одной сборки.</p>
-    {% endif %}
+    <ul class="nav nav-tabs" id="profileTabs" role="tablist">  <!-- Bootstrap tabs -->
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="builds-tab" data-bs-toggle="tab" data-bs-target="#builds-pane" type="button" role="tab" aria-controls="builds-pane" aria-selected="true">Сборки</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="cart-tab" data-bs-toggle="tab" data-bs-target="#cart-pane" type="button" role="tab" aria-controls="cart-pane" aria-selected="false">Корзина</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="profileTabsContent">
+        <div class="tab-pane fade show active" id="builds-pane" role="tabpanel" aria-labelledby="builds-tab" tabindex="0">
+            <h3>Ваши сборки:</h3>
+            {% if builds %}
+                <ul>
+                    {% for build in builds %}
+                        <li>
+                            <a href="{% url 'builds:build_detail' build.pk %}">
+                                Сборка {{ build.pk }} ({{ build.cpu.manufacturer }} {{ build.cpu.model }})
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Вы пока не создали ни одной сборки.</p>
+            {% endif %}
+        </div>
+        <div class="tab-pane fade" id="cart-pane" role="tabpanel" aria-labelledby="cart-tab" tabindex="0">
+            <h3>Ваши товары в корзине:</h3>
+            {% if cart_items %}
+                <ul>
+                    {% for item in cart_items %}
+                        <li>
+                            {% if item.build %}
+                                Сборка: <a href="{% url 'builds:build_detail' item.build.pk %}">Сборка {{ item.build.pk }}</a> ({{ item.build.cpu.manufacturer }} {{ item.build.cpu.model }}) - Количество: {{ item.quantity }}
+                            {% elif item.cpu %}
+                                Процессор: {{ item.cpu.manufacturer }} {{ item.cpu.model }} - Количество: {{ item.quantity }}
+                            {% elif item.gpu %}
+                                Видеокарта: {{ item.gpu.manufacturer }} {{ item.gpu.model }} - Количество: {{ item.quantity }}
+                            {% elif item.motherboard %}
+                                Материнская плата: {{ item.motherboard.manufacturer }} {{ item.motherboard.model }} - Количество: {{ item.quantity }}
+                            {% elif item.ram %}
+                                Оперативная память: {{ item.ram.manufacturer }} {{ item.ram.model }} - Количество: {{ item.quantity }}
+                            {% elif item.storage %}
+                                Накопитель: {{ item.storage.manufacturer }} {{ item.storage.model }} - Количество: {{ item.quantity }}
+                            {% elif item.psu %}
+                                Блок питания: {{ item.psu.manufacturer }} {{ item.psu.model }} - Количество: {{ item.quantity }}
+                            {% elif item.case %}
+                                Корпус: {{ item.case.manufacturer }} {{ item.case.model }} - Количество: {{ item.quantity }}
+                            {% else %}
+                                Неизвестный товар в корзине
+                            {% endif %}
+                            <a href="{% url 'builds:remove_from_cart' item.pk %}">Удалить</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Ваша корзина пуста.</p>
+            {% endif %}
+        </div>
+    </div>
 {% endblock %}

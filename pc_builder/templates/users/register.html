@@ -1,11 +1,19 @@
 <!-- templates/users/register.html -->
-{% extends "base.html" %} <!-- Или другой базовый шаблон -->
+{% extends "base.html" %}
+ <!-- Или другой базовый шаблон -->
 {% block content %}
     <h2>Регистрация</h2>
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Зарегистрироваться</button>
+        <button type="submit" class="btn btn-primary">Зарегистрироваться</button>  <!-- Bootstrap button -->
     </form>
     <p>Уже есть аккаунт? <a href="{% url 'users:login' %}">Войти</a></p>
 {% endblock %}
