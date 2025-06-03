@@ -1,8 +1,11 @@
+#components\views.py
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .models import CPU, GPU, Motherboard, RAM, Storage, PSU, Case, Manufacturer  # Убедитесь, что импортированы все модели
 from django.db.models import Q
 from django import forms
+from .models import Cooler, CPU, Manufacturer # Импортируйте модель Cooler
+
 
 # --- Forms ---
 class ComponentSearchForm(forms.Form): #Базовая форма для поиска (можно сделать для каждого компонента, расширяя этот класс)
@@ -217,3 +220,32 @@ def case_list(request):
 def case_detail(request, pk):
     case = get_object_or_404(Case, pk=pk)
     return render(request, 'components/case_detail.html', {'case': case})
+
+# --- Cooler Views ---
+def cooler_list(request):
+    form = ComponentSearchForm(request.GET)
+    query = ''
+    coolers_list = Cooler.objects.all()  # Получаем все кулеры
+
+    if form.is_valid():
+        query = form.cleaned_data['q']
+        if query:
+            coolers_list = coolers_list.filter(
+                Q(manufacturer__name__icontains=query) | Q(model__icontains=query)
+            ).distinct()
+
+    # Пагинация (если нужна)
+    paginator = Paginator(coolers_list, 6)
+    page = request.GET.get('page')
+    try:
+        coolers = paginator.page(page)
+    except PageNotAnInteger:
+        coolers = paginator.page(1)
+    except EmptyPage:
+        coolers = paginator.page(paginator.num_pages)
+
+    return render(request, 'components/cooler_list.html', {'coolers': coolers, 'form': form, 'query': query})
+
+def cooler_detail(request, pk):
+    cooler = get_object_or_404(Cooler, pk=pk)
+    return render(request, 'components/cooler_detail.html', {'cooler': cooler})

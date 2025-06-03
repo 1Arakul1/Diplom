@@ -145,7 +145,29 @@
                 {% endif %}
             </div>
         </div>
+                <!-- Cooler -->
+    <div class="col-md-4">
+        <div class="card mb-3 component-card">
+            {% if build.cooler %}
+                {% if build.cooler.image %}
+                    <img src="{{ build.cooler.image.url }}" class="card-img-top component-image" alt="{{ build.cooler.model }}" style="object-fit: contain;">
+                {% else %}
+                    <img src="{{ build.cooler.image.url }}" class="card-img-top component-image" alt="No Image" style="object-fit: contain;">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">Охлаждение</h5>
+                    <p class="card-text"><a href="{% url 'components:cooler_detail' build.cooler.pk %}">{{ build.cooler.manufacturer }} {{ build.cooler.model }}</a></p>
+                </div>
+            {% else %}
+                <p>Охлаждение не выбрано</p>
+            {% endif %}
+        </div>
     </div>
+
+        
+    </div>
+
+    
 
     <p>Общая стоимость: {{ build.total_price }}</p>
 
@@ -153,4 +175,7 @@
     <a href="{% url 'games:predict_fps' %}?cpu={{ build.cpu.pk }}&gpu={{ build.gpu.pk }}" class="btn btn-primary mt-3">
         Проверить, какие игры потянет эта сборка
     </a>
+
+
+
 {% endblock %}

@@ -1,26 +1,25 @@
 # components/admin.py
-
 from django.contrib import admin
-from .models import Manufacturer, CPU, Motherboard, RAM, GPU, Storage, PSU, Case
-from .forms import CPUForm, GPUForm, MotherboardForm, RAMForm, StorageForm, PSUForm, CaseForm #Импортируйте другие формы
+from .models import Manufacturer, CPU, GPU, Motherboard, RAM, Storage, PSU, Case, Build, Cooler
+from .forms import CPUForm, GPUForm, MotherboardForm, RAMForm, StorageForm, PSUForm, CaseForm
 
 @admin.register(Manufacturer)
 class ManufacturerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'component_type')  # Поля, которые будут отображаться в списке
-    search_fields = ('name',)  # Поля, по которым можно искать
+    list_display = ('name', 'component_type')
+    search_fields = ('name',)
     list_filter = ('component_type',)
 
 @admin.register(CPU)
 class CPUAdmin(admin.ModelAdmin):
-    list_display = ('manufacturer', 'model', 'cores', 'frequency', 'price', 'image')  # Добавлено 'image'
-    list_filter = ('manufacturer',)  # Фильтры
-    search_fields = ('model', 'manufacturer__name')  # Поля, по которым можно искать
-    ordering = ('manufacturer', 'model')  # Сортировка
+    list_display = ('manufacturer', 'model', 'cores', 'frequency', 'price', 'image')
+    list_filter = ('manufacturer',)
+    search_fields = ('model', 'manufacturer__name')
+    ordering = ('manufacturer', 'model')
     form = CPUForm
 
 @admin.register(GPU)
 class GPUAdmin(admin.ModelAdmin):
-    list_display = ('manufacturer', 'model', 'memory', 'frequency', 'tdp', 'price', 'image') # Добавлено 'image'
+    list_display = ('manufacturer', 'model', 'memory', 'frequency', 'tdp', 'price', 'image')
     list_filter = ('manufacturer',)
     search_fields = ('model', 'manufacturer__name')
     ordering = ('manufacturer', 'model')
@@ -28,7 +27,7 @@ class GPUAdmin(admin.ModelAdmin):
 
 @admin.register(Motherboard)
 class MotherboardAdmin(admin.ModelAdmin):
-    list_display = ('manufacturer', 'model', 'form_factor', 'socket', 'chipset', 'price', 'image') # Добавлено 'image'
+    list_display = ('manufacturer', 'model', 'form_factor', 'socket', 'chipset', 'price', 'image')
     list_filter = ('manufacturer', 'form_factor', 'socket', 'chipset')
     search_fields = ('model', 'manufacturer__name', 'socket', 'chipset')
     ordering = ('manufacturer', 'model')
@@ -36,7 +35,7 @@ class MotherboardAdmin(admin.ModelAdmin):
 
 @admin.register(RAM)
 class RAMAdmin(admin.ModelAdmin):
-    list_display = ('manufacturer', 'model', 'capacity', 'frequency', 'type', 'price', 'image') # Добавлено 'image'
+    list_display = ('manufacturer', 'model', 'capacity', 'frequency', 'type', 'price', 'image')
     list_filter = ('manufacturer', 'type')
     search_fields = ('model', 'manufacturer__name', 'type')
     ordering = ('manufacturer', 'model')
@@ -44,7 +43,7 @@ class RAMAdmin(admin.ModelAdmin):
 
 @admin.register(Storage)
 class StorageAdmin(admin.ModelAdmin):
-    list_display = ('manufacturer', 'model', 'capacity', 'type', 'interface', 'price', 'image') # Добавлено 'image'
+    list_display = ('manufacturer', 'model', 'capacity', 'type', 'interface', 'price', 'image')
     list_filter = ('manufacturer', 'type', 'interface')
     search_fields = ('model', 'manufacturer__name', 'type', 'interface')
     ordering = ('manufacturer', 'model')
@@ -52,7 +51,7 @@ class StorageAdmin(admin.ModelAdmin):
 
 @admin.register(PSU)
 class PSUAdmin(admin.ModelAdmin):
-    list_display = ('manufacturer', 'model', 'power', 'certification', 'price', 'image') # Добавлено 'image'
+    list_display = ('manufacturer', 'model', 'power', 'certification', 'price', 'image')
     list_filter = ('manufacturer', 'certification')
     search_fields = ('model', 'manufacturer__name', 'certification')
     ordering = ('manufacturer', 'model')
@@ -60,8 +59,20 @@ class PSUAdmin(admin.ModelAdmin):
 
 @admin.register(Case)
 class CaseAdmin(admin.ModelAdmin):
-    list_display = ('manufacturer', 'model', 'form_factor', 'dimensions', 'price', 'image') # Добавлено 'image'
+    list_display = ('manufacturer', 'model', 'form_factor', 'dimensions', 'price', 'image')
     list_filter = ('manufacturer', 'form_factor')
     search_fields = ('model', 'manufacturer__name', 'form_factor')
     ordering = ('manufacturer', 'model')
     form = CaseForm
+
+@admin.register(Build)
+class BuildAdmin(admin.ModelAdmin):
+    list_display = ('user', 'cpu', 'motherboard', 'gpu', 'get_total_price')  # Использовали get_total_price
+    list_filter = ('user',)
+    search_fields = ('user__username', 'cpu__model', 'gpu__model')
+
+@admin.register(Cooler)
+class CoolerAdmin(admin.ModelAdmin):
+    list_display = ('manufacturer', 'model', 'cooler_type', 'fan_size', 'price', 'image')
+    list_filter = ('manufacturer', 'cooler_type')
+    search_fields = ('model', 'manufacturer__name')

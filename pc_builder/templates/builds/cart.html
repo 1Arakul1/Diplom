@@ -31,32 +31,37 @@
                                     {% elif item.gpu %}
                                         Видеокарта: {{ item.gpu.manufacturer }} {{ item.gpu.model }}
                                         {% if item.gpu.image %}
-                                            <img src="" alt="{{ item.gpu.model }}" style="width: 50px;">
+                                            <img src="{{ item.gpu.image.url }}" alt="{{ item.gpu.model }}" style="width: 50px;">
                                         {% endif %}
                                     {% elif item.motherboard %}
                                         Материнская плата: {{ item.motherboard.manufacturer }} {{ item.motherboard.model }}
                                         {% if item.motherboard.image %}
-                                            <img src="" alt="{{ item.motherboard.model }}" style="width: 50px;">
+                                            <img src="{{ item.motherboard.image.url }}" alt="{{ item.motherboard.model }}" style="width: 50px;">
                                         {% endif %}
                                     {% elif item.ram %}
                                         Оперативная память: {{ item.ram.manufacturer }} {{ item.ram.model }}
                                         {% if item.ram.image %}
-                                            <img src="" alt="{{ item.ram.model }}" style="width: 50px;">
+                                            <img src="{{ item.ram.image.url }}" alt="{{ item.ram.model }}" style="width: 50px;">
                                         {% endif %}
                                     {% elif item.storage %}
                                         Накопитель: {{ item.storage.manufacturer }} {{ item.storage.model }}
                                         {% if item.storage.image %}
-                                            <img src="" alt="{{ item.storage.model }}" style="width: 50px;">
+                                            <img src="{{ item.storage.image.url }}" alt="{{ item.storage.model }}" style="width: 50px;">
                                         {% endif %}
                                     {% elif item.psu %}
                                         Блок питания: {{ item.psu.manufacturer }} {{ item.psu.model }}
                                         {% if item.psu.image %}
-                                            <img src="" alt="{{ item.psu.model }}" style="width: 50px;">
+                                            <img src="{{ item.psu.image.url }}" alt="{{ item.psu.model }}" style="width: 50px;">
                                         {% endif %}
                                     {% elif item.case %}
                                         Корпус: {{ item.case.manufacturer }} {{ item.case.model }}
                                         {% if item.case.image %}
-                                            <img src="" alt="{{ item.case.model }}" style="width: 50px;">
+                                            <img src="{{ item.case.image.url }}" alt="{{ item.case.model }}" style="width: 50px;">
+                                        {% endif %}
+                                    {% elif item.cooler %}
+                                        Кулер: {{ item.cooler.manufacturer }} {{ item.cooler.model }}
+                                        {% if item.cooler.image %}
+                                            <img src="{{ item.cooler.image.url }}" alt="{{ item.cooler.model }}" style="width: 50px;">
                                         {% endif %}
                                     {% else %}
                                         Неизвестный товар
@@ -80,6 +85,8 @@
                                         {{ item.psu.price | floatformat:2 }}
                                     {% elif item.case %}
                                         {{ item.case.price | floatformat:2 }}
+                                    {% elif item.cooler %}
+                                        {{ item.cooler.price | floatformat:2 }}
                                     {% else %}
                                         0.00
                                     {% endif %}
@@ -97,7 +104,7 @@
         <div class="row">
             <div class="col-md-12 text-right">
                 <p>Общая стоимость: {{ total_price | floatformat:2 }}</p>
-                <a href="{% url 'builds:checkout' %}" class="btn btn-success">Оформить заказ</a>  <!-- Добавлена кнопка -->
+                <a href="{% url 'builds:checkout' %}" class="btn btn-success">Оформить заказ</a>
             </div>
         </div>
     {% else %}

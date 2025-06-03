@@ -1,7 +1,9 @@
 # builds/models.py
 from django.db import models
 from django.contrib.auth.models import User
-from components.models import CPU, GPU, Motherboard, RAM, Storage, PSU, Case
+from components.models import CPU, GPU, Motherboard, RAM, Storage, PSU, Case, Cooler  # Импортируем Cooler
+from django.contrib import admin
+
 
 class Build(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Пользователь")
@@ -13,10 +15,13 @@ class Build(models.Model):
     psu = models.ForeignKey(PSU, on_delete=models.SET_NULL, verbose_name="PSU", blank=True, null=True)
     case = models.ForeignKey(Case, on_delete=models.SET_NULL, verbose_name="Case", blank=True, null=True)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Общая стоимость", blank=True, null=True)
+    cooler = models.ForeignKey(Cooler, on_delete=models.SET_NULL, verbose_name="Охлаждение", blank=True, null=True, related_name='builds')  # Добавляем поле cooler
+    # ... (остальные поля)
 
     def __str__(self):
         return f"Сборка {self.pk} - {self.cpu.model if self.cpu else 'Без CPU'}"
 
+    @admin.display(description='Общая стоимость')  # <---- Добавляем admin.display
     def get_total_price(self):
         """Вычисляет общую стоимость сборки."""
         price = 0
@@ -34,6 +39,8 @@ class Build(models.Model):
             price += self.psu.price
         if self.case:
             price += self.case.price
+        if self.cooler: # Добавляем цену кулера
+            price += self.cooler.price
         return price
     class Meta:
         verbose_name = "Сборка"
@@ -49,6 +56,7 @@ class CartItem(models.Model):
     storage = models.ForeignKey(Storage, on_delete=models.CASCADE, verbose_name="Накопитель", blank=True, null=True)
     psu = models.ForeignKey(PSU, on_delete=models.CASCADE, verbose_name="Блок питания", blank=True, null=True)
     case = models.ForeignKey(Case, on_delete=models.CASCADE, verbose_name="Корпус", blank=True, null=True)
+    cooler = models.ForeignKey(Cooler, on_delete=models.CASCADE, verbose_name="Охлаждение", blank=True, null=True) # Добавлено поле cooler
     build = models.ForeignKey(Build, on_delete=models.CASCADE, verbose_name="Сборка", blank=True, null=True)
     quantity = models.PositiveIntegerField(default=1, verbose_name="Количество")
 
@@ -69,6 +77,8 @@ class CartItem(models.Model):
             return f"PSU {self.psu.manufacturer} {self.psu.model} для {self.user.username}"
         elif self.case:
             return f"Case {self.case.manufacturer} {self.case.model} для {self.user.username}"
+        elif self.cooler:
+            return f"Cooler {self.cooler.manufacturer} {self.cooler.model} для {self.user.username}" # Добавлено отображение cooler
         else:
             return f"Неизвестный товар в корзине для {self.user.username}"
 
@@ -91,6 +101,8 @@ class CartItem(models.Model):
             price = self.psu.price
         elif self.case:
             price = self.case.price
+        elif self.cooler:
+            price = self.cooler.price # Добавляем цену кулера
         return price * self.quantity  # умножаем на количество
 
     class Meta:

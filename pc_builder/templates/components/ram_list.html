@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-
 {% load static %}
 
 {% block content %}
@@ -27,8 +26,7 @@
                     <div class="card-body">
                         <h5 class="card-title">{{ ram.manufacturer }} {{ ram.model }}</h5>
                         <p class="card-text">
-                            <strong>Объем:</strong> {{ ram.capacity }} GB<br>
-                            <strong>Тип:</strong> {{ ram.type }}<br>
+                            <strong>Объем:</strong> {{ ram.memory }} GB<br>
                             <strong>Цена:</strong> {{ ram.price }}
                         </p>
                         <a href="{% url 'components:ram_detail' ram.pk %}" class="btn btn-primary btn-sm">Подробнее</a>

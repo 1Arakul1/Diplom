@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+
 {% load static %}
 
 {% block content %}
@@ -27,7 +28,6 @@
                         <h5 class="card-title">{{ psu.manufacturer }} {{ psu.model }}</h5>
                         <p class="card-text">
                             <strong>Мощность:</strong> {{ psu.power }} Вт<br>
-                            <strong>Сертификация:</strong> {{ psu.certification }}<br>
                             <strong>Цена:</strong> {{ psu.price }}
                         </p>
                         <a href="{% url 'components:psu_detail' psu.pk %}" class="btn btn-primary btn-sm">Подробнее</a>

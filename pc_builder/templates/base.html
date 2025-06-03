@@ -1,45 +1,45 @@
+{% load static %}
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <title>PC Builder</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <!-- Bootstrap 5 CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+
     {% load static %}
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <!-- Ваш пользовательский CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
 </head>
 <body>
-    <!-- Loading Spinner -->
-    <div class="db-app-loading" id="loading-overlay" style="display: none;">
-        <!-- Первый вариант (gooey) -->
-        <!--
-        <div class="gooey">
-            <div class="dot"></div>
-            <div class="dots">
-                <span></span>
-                <span></span>
-            </div>
-        </div>
-        -->
-
-        <!-- Второй вариант (spinner) -->
+    <!-- Загрузка -->
+    <div id="loading-overlay" class="db-app-loading" style="display:none;">
         <div class="db-loading-spinner">
             <div class="db-loading-spinner__double-bounce"></div>
             <div class="db-loading-spinner__double-bounce"></div>
         </div>
     </div>
-    <!-- End Loading Spinner -->
 
     <header>
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
             <a class="navbar-brand" href="/">Главная</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown"
+                aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNavDropdown">
                 <ul class="navbar-nav">
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             Каталог
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
@@ -50,6 +50,7 @@
                             <a class="dropdown-item" href="{% url 'components:storage_list' %}">Накопители</a>
                             <a class="dropdown-item" href="{% url 'components:psu_list' %}">Блоки питания</a>
                             <a class="dropdown-item" href="{% url 'components:case_list' %}">Корпуса</a>
+                            <a class="dropdown-item" href="{% url 'components:cooler_list' %}">Охлаждение</a>
                         </div>
                     </li>
                     <li class="nav-item">
@@ -57,7 +58,7 @@
                     </li>
                 </ul>
 
-                <ul class="navbar-nav ml-auto">  <!-- ml-auto - для выравнивания вправо -->
+                <ul class="navbar-nav ml-auto">
                     {% if user.is_authenticated %}
                         <li class="nav-item">
                             <a class="nav-link">Привет, {{ user.username }}</a>
@@ -76,11 +77,11 @@
                             <a class="nav-link" href="{% url 'users:register' %}">Зарегистрироваться</a>
                         </li>
                     {% endif %}
-                     <li class="nav-item">
+                    <li class="nav-item">
                         <a class="nav-link" href="{% url 'builds:cart' %}">
                             Корзина
                             {% if cart_items %}
-                                <span class="badge badge-light"> {{ cart_items|length }}</span>  <!-- отображаем количество элементов -->
+                                <span class="badge badge-light">{{ cart_items|length }}</span>
                             {% endif %}
                         </a>
                     </li>
@@ -88,48 +89,46 @@
             </div>
         </nav>
     </header>
-    <hr>
-    <div class="container">  <!-- Добавлен container -->
-        {% block content %}{% endblock %}
-    </div>
 
-    <!-- Подключение jQuery (ОБЯЗАТЕЛЬНО) -->
+    <hr />
+
+    <main class="container">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Скрипты Bootstrap и jQuery -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    
-    <script>
-        console.log('Скрипт начал работу!');
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOMContentLoaded событие произошло!');
-            try {
-                document.getElementById('loading-overlay').classList.remove('db-app-loading--visible');
-            } catch (error) {
-                console.error('Ошибка в DOMContentLoaded:', error);
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.classList.remove('db-app-loading--visible');
             }
         });
-    </script>
-    <script>
+
         function showLoading() {
-            console.log('showLoading() вызвана!');
-            try {
-                 document.getElementById('loading-overlay').classList.add('db-app-loading--visible');
-            } catch (error) {
-                console.error('Ошибка в showLoading():', error);
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.classList.add('db-app-loading--visible');
             }
         }
 
         function hideLoading() {
-            console.log('hideLoading() вызвана!');
-            setTimeout(function() {
-                try {
-                    document.getElementById('loading-overlay').classList.remove('db-app-loading--visible');
-                } catch (error) {
-                     console.error('Ошибка в setTimeout:', error);
+            setTimeout(() => {
+                const overlay = document.getElementById('loading-overlay');
+                if (overlay) {
+                    overlay.classList.remove('db-app-loading--visible');
                 }
             }, 10000);
         }
     </script>
 </body>
 </html>
+
+

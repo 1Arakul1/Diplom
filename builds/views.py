@@ -3,12 +3,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Build, CartItem
-from components.models import CPU, GPU, Motherboard, RAM, Storage, PSU, Case
-from .forms import AddToCartForm
+from components.models import CPU, GPU, Motherboard, RAM, Storage, PSU, Case, Cooler  # Импорт Cooler
+from .forms import AddToCartForm  # Импортируем форму
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib import messages  # Import messages
 from django.http import JsonResponse  # Импортируем JsonResponse
-from components.forms import CPUForm, GPUForm, MotherboardForm, RAMForm, StorageForm, PSUForm, CaseForm # Импортируем формы компонентов
+from django.core.exceptions import ValidationError # Импортируем ValidationError
+from .models import CartItem
+
 
 # --- Вспомогательная функция для получения cart_items и total_price (переиспользуемая) ---
 def get_cart_context(request):
@@ -32,70 +34,66 @@ def cart_view(request):
 def add_to_cart(request):
     """Добавление товара в корзину."""
     if request.method == 'POST':
-        print("POST data:", request.POST)
-        print("Is form bound?", AddToCartForm(request.POST).is_bound)
-        form = AddToCartForm(request.POST)
-        if form.is_valid():
-            print("Form is valid")
-            component_type = form.cleaned_data['component_type']
-            component_id = form.cleaned_data['component_id']
-            quantity = form.cleaned_data['quantity']
+        component_type = request.POST.get('component_type')
+        component_id = request.POST.get('component_id')
 
-            print(f"Component Type: {component_type}, ID: {component_id}, Quantity: {quantity}")
+        if not component_type or not component_id:
+            return redirect('builds:build_list')  # Или другая страница ошибки
 
-            component_mapping = {
-                'cpu': CPU,
-                'gpu': GPU,
-                'motherboard': Motherboard,
-                'ram': RAM,
-                'storage': Storage,
-                'psu': PSU,
-                'case': Case,
-                'build': Build,
-            }
+        component_id = int(component_id)
 
-            if component_type not in component_mapping:
-                return JsonResponse({'status': 'error', 'message': 'Неверный тип компонента.'})
+        try:
+            if component_type == 'cpu':
+                component = get_object_or_404(CPU, pk=component_id)
+            elif component_type == 'gpu':
+                component = get_object_or_404(GPU, pk=component_id)
+            elif component_type == 'motherboard':
+                component = get_object_or_404(Motherboard, pk=component_id)
+            elif component_type == 'ram':
+                component = get_object_or_404(RAM, pk=component_id)
+            elif component_type == 'storage':
+                component = get_object_or_404(Storage, pk=component_id)
+            elif component_type == 'psu':
+                component = get_object_or_404(PSU, pk=component_id)
+            elif component_type == 'case':
+                component = get_object_or_404(Case, pk=component_id)
+            elif component_type == 'cooler':
+                component = get_object_or_404(Cooler, pk=component_id)
+            else:
+                return redirect('builds:build_list') # Или другая страница ошибки
 
-            model = component_mapping[component_type]
+        except (CPU.DoesNotExist, GPU.DoesNotExist, Motherboard.DoesNotExist, RAM.DoesNotExist, Storage.DoesNotExist, PSU.DoesNotExist, Case.DoesNotExist, Cooler.DoesNotExist):
+            return redirect('builds:build_list')  # Или другая страница ошибки
 
-            try:
-                component = get_object_or_404(model, pk=component_id)
-            except (ValueError, TypeError):
-                return JsonResponse({'status': 'error', 'message': 'Неверный ID компонента.'})
+        #  Важно:  Получаем текущий CartItem для данного товара.
+        cart_item, created = CartItem.objects.get_or_create(
+            user=request.user,
+            cpu=component if component_type == 'cpu' else None,
+            gpu=component if component_type == 'gpu' else None,
+            motherboard=component if component_type == 'motherboard' else None,
+            ram=component if component_type == 'ram' else None,
+            storage=component if component_type == 'storage' else None,
+            psu=component if component_type == 'psu' else None,
+            case=component if component_type == 'case' else None,
+            cooler=component if component_type == 'cooler' else None,  # Добавлено cooler
+        )
 
-            # Получаем или создаем CartItem.  Используем фильтрацию по типу и ID компонента.
-            cart_item, created = CartItem.objects.get_or_create(
-                user=request.user,
-                **{component_type: component},
-                defaults={'quantity': 0}
-            )
-            print(f"Cart item created/updated: {cart_item.__dict__}")
-
-            # Если элемент уже существует (не created), увеличиваем quantity
-            if not created:
-                cart_item.quantity += quantity
-            else: # Если создан - устанавливаем quantity
-                 cart_item.quantity = quantity
-
+        if not created:
+            cart_item.quantity += 1
             cart_item.save()
-            print(f"Cart item created/updated: {cart_item.__dict__}")
-            return redirect('builds:cart')
 
-        else:
-            print("Form is not valid")
-            print(form.errors)
-            return JsonResponse({'status': 'error', 'message': 'Ошибка валидации формы.'})
+        return redirect('builds:cart')
 
-    else:
-        return JsonResponse({'status': 'error', 'message': 'Неверный метод запроса.'})
 
+    return redirect('builds:build_list')  # Обработка GET запросов (или другая страница по умолчанию)
+
+    
 @login_required
 def remove_from_cart(request, item_id):
     """Удаление товара из корзины."""
     cart_item = get_object_or_404(CartItem, pk=item_id, user=request.user)
     cart_item.delete()
-    return redirect('builds:cart') # Перенаправляем на корзину
+    return redirect('builds:cart')  # Перенаправляем на корзину
 
 # -----------------  Остальной код views.py ----------------------
 def build_list(request):
@@ -115,7 +113,7 @@ def build_list(request):
     # --- Добавляем в контекст шаблона ---
     context = {
         'builds': builds,
-        **cart_context, # Распаковываем cart_context (cart_items, total_price)
+        **cart_context,  # Распаковываем cart_context (cart_items, total_price)
     }
     return render(request, 'builds/build_list.html', context)
 
@@ -130,7 +128,7 @@ def build_detail(request, pk):
 
 def build_create(request):
     if request.method == 'POST':
-        # Обработка формы создания сборки
+        # Получаем данные из POST
         cpu_id = request.POST.get('cpu')
         gpu_id = request.POST.get('gpu')
         motherboard_id = request.POST.get('motherboard')
@@ -138,26 +136,57 @@ def build_create(request):
         storage_id = request.POST.get('storage')
         psu_id = request.POST.get('psu')
         case_id = request.POST.get('case')
+        cooler_id = request.POST.get('cooler')  # Получаем id кулера
 
-        # Получаем компоненты, обрабатывая ошибки
+        # Получаем объекты компонентов
         try:
-            cpu = get_object_or_404(CPU, pk=cpu_id)
-            gpu = get_object_or_404(GPU, pk=gpu_id)
-            motherboard = get_object_or_404(Motherboard, pk=motherboard_id)
-            ram = get_object_or_404(RAM, pk=ram_id)
-            storage = get_object_or_404(Storage, pk=storage_id)
-            psu = get_object_or_404(PSU, pk=psu_id)
-            case = get_object_or_404(Case, pk=case_id)
-        except (ValueError, TypeError):
+            cpu = get_object_or_404(CPU, pk=cpu_id) if cpu_id else None
+            gpu = get_object_or_404(GPU, pk=gpu_id) if gpu_id else None
+            motherboard = get_object_or_404(Motherboard, pk=motherboard_id) if motherboard_id else None
+            ram = get_object_or_404(RAM, pk=ram_id) if ram_id else None
+            storage = get_object_or_404(Storage, pk=storage_id) if storage_id else None
+            psu = get_object_or_404(PSU, pk=psu_id) if psu_id else None
+            case = get_object_or_404(Case, pk=case_id) if case_id else None
+            cooler = get_object_or_404(Cooler, pk=cooler_id) if cooler_id else None  # Получаем кулер
+        except (ValueError, TypeError, CPU.DoesNotExist, GPU.DoesNotExist, Motherboard.DoesNotExist,
+                RAM.DoesNotExist, Storage.DoesNotExist, PSU.DoesNotExist, Case.DoesNotExist, Cooler.DoesNotExist):
             return render(request, 'builds/build_create.html',
-                          {'error_message': 'Неверный формат ID компонента.',
+                          {'error_message': 'Один из выбранных компонентов не найден.',
                            'cpus': CPU.objects.all(), 'gpus': GPU.objects.all(),
                            'motherboards': Motherboard.objects.all(), 'rams': RAM.objects.all(),
                            'storages': Storage.objects.all(), 'psus': PSU.objects.all(),
-                           'cases': Case.objects.all()})
+                           'cases': Case.objects.all(), 'coolers': Cooler.objects.all()})  # Добавляем coolers в context
 
-        # Рассчитываем общую стоимость
-        total_price = 0
+        # Проверки совместимости
+        error_message = None
+
+        if cpu and motherboard:
+            if not cpu.is_compatible_with_motherboard(motherboard):
+                error_message = 'Процессор не совместим с материнской платой.'
+
+        if motherboard and ram:
+            if not motherboard.is_compatible_with_ram(ram):
+                error_message = 'Оперативная память не совместима с материнской платой.'
+
+        if gpu and psu:
+            if not psu.is_sufficient_for_gpu(gpu):
+                error_message = 'Мощности блока питания недостаточно для видеокарты.'
+
+        if cpu and cooler:
+            if not cooler.is_compatible_with_cpu(cpu):
+                error_message = 'Кулер не совместим с процессором.'
+
+        if error_message:
+            return render(request, 'builds/build_create.html',
+                          {'error_message': error_message,
+                           'cpus': CPU.objects.all(), 'gpus': GPU.objects.all(),
+                           'motherboards': Motherboard.objects.all(), 'rams': RAM.objects.all(),
+                           'storages': Storage.objects.all(), 'psus': PSU.objects.all(),
+                           'cases': Case.objects.all(), 'coolers': Cooler.objects.all()})
+
+
+        # Создаем сборку
+        total_price = 0.0
         if cpu:
             total_price += cpu.price
         if gpu:
@@ -172,20 +201,20 @@ def build_create(request):
             total_price += psu.price
         if case:
             total_price += case.price
+        if cooler:
+            total_price += cooler.price  # Добавляем цену кулера
 
-        build = Build(
-            user=request.user,
-            cpu=cpu,
-            gpu=gpu,
-            motherboard=motherboard,
-            ram=ram,
-            storage=storage,
-            psu=psu,
-            case=case,
-            total_price=total_price
-        )
-        build.save()
-        return redirect('builds:build_detail', pk=build.pk)
+        build = Build(user=request.user, cpu=cpu, gpu=gpu, motherboard=motherboard, ram=ram, storage=storage, psu=psu, case=case, cooler=cooler, total_price=total_price)  # Добавляем cooler в аргументы
+        try:
+            build.save()
+            return redirect('builds:build_detail', pk=build.pk)
+        except ValidationError as e:
+             return render(request, 'builds/build_create.html',
+                          {'error_message': f'Ошибка сохранения сборки: {e}',
+                           'cpus': CPU.objects.all(), 'gpus': GPU.objects.all(),
+                           'motherboards': Motherboard.objects.all(), 'rams': RAM.objects.all(),
+                           'storages': Storage.objects.all(), 'psus': PSU.objects.all(),
+                           'cases': Case.objects.all(), 'coolers': Cooler.objects.all()})
 
     else:
         cpus = CPU.objects.all()
@@ -195,16 +224,15 @@ def build_create(request):
         storages = Storage.objects.all()
         psus = PSU.objects.all()
         cases = Case.objects.all()
-        context = {'cpus': cpus, 'gpus': gpus, 'motherboards': motherboards, 'rams': rams, 'storages': storages, 'psus': psus, 'cases': cases}
+        coolers = Cooler.objects.all()  # Получаем все кулеры
+        context = {'cpus': cpus, 'gpus': gpus, 'motherboards': motherboards, 'rams': rams, 'storages': storages, 'psus': psus, 'cases': cases, 'coolers': coolers}  # Добавляем coolers в context
         return render(request, 'builds/build_create.html', context)
 
 def build_edit(request, pk):
     build = get_object_or_404(Build, pk=pk)
 
     if request.method == 'POST':
-        # Обработка формы редактирования
-        # Получите данные из POST, создайте формы для каждого компонента и валидируйте их.
-        # Сохраните изменения в сборке.
+        # Получаем данные из POST
         cpu_id = request.POST.get('cpu')
         gpu_id = request.POST.get('gpu')
         motherboard_id = request.POST.get('motherboard')
@@ -212,8 +240,9 @@ def build_edit(request, pk):
         storage_id = request.POST.get('storage')
         psu_id = request.POST.get('psu')
         case_id = request.POST.get('case')
+        cooler_id = request.POST.get('cooler')
 
-        # Получаем компоненты, обрабатывая ошибки
+        # Получаем объекты компонентов, обрабатывая ошибки
         try:
             cpu = CPU.objects.get(pk=cpu_id) if cpu_id else None
             gpu = GPU.objects.get(pk=gpu_id) if gpu_id else None
@@ -222,8 +251,8 @@ def build_edit(request, pk):
             storage = Storage.objects.get(pk=storage_id) if storage_id else None
             psu = PSU.objects.get(pk=psu_id) if psu_id else None
             case = Case.objects.get(pk=case_id) if case_id else None
-        except (CPU.DoesNotExist, GPU.DoesNotExist, Motherboard.DoesNotExist, RAM.DoesNotExist, Storage.DoesNotExist, PSU.DoesNotExist, Case.DoesNotExist):
-            # Обработка ошибок, если компонент не найден.
+            cooler = Cooler.objects.get(pk=cooler_id) if cooler_id else None
+        except (CPU.DoesNotExist, GPU.DoesNotExist, Motherboard.DoesNotExist, RAM.DoesNotExist, Storage.DoesNotExist, PSU.DoesNotExist, Case.DoesNotExist, Cooler.DoesNotExist):
             return render(request, 'builds/build_edit.html', {
                 'build': build,
                 'error_message': 'Один из выбранных компонентов не найден.',
@@ -234,6 +263,38 @@ def build_edit(request, pk):
                 'storages': Storage.objects.all(),
                 'psus': PSU.objects.all(),
                 'cases': Case.objects.all(),
+                'coolers': Cooler.objects.all(), # Добавляем coolers
+            })
+        error_message = None
+
+        if cpu and motherboard:
+            if not cpu.is_compatible_with_motherboard(motherboard):
+                error_message = 'Процессор не совместим с материнской платой.'
+
+        if motherboard and ram:
+            if not motherboard.is_compatible_with_ram(ram):
+                error_message = 'Оперативная память не совместима с материнской платой.'
+
+        if gpu and psu:
+            if not psu.is_sufficient_for_gpu(gpu):
+                error_message = 'Мощности блока питания недостаточно для видеокарты.'
+
+        if cpu and cooler:
+            if not cooler.is_compatible_with_cpu(cpu):
+                error_message = 'Кулер не совместим с процессором.'
+
+        if error_message:
+            return render(request, 'builds/build_edit.html', {
+                'build': build,
+                'error_message': error_message,
+                'cpus': CPU.objects.all(),
+                'gpus': GPU.objects.all(),
+                'motherboards': Motherboard.objects.all(),
+                'rams': RAM.objects.all(),
+                'storages': Storage.objects.all(),
+                'psus': PSU.objects.all(),
+                'cases': Case.objects.all(),
+                'coolers': Cooler.objects.all(),  # Добавляем coolers
             })
 
         #  Обновление полей build
@@ -244,9 +305,10 @@ def build_edit(request, pk):
         build.storage = storage
         build.psu = psu
         build.case = case
+        build.cooler = cooler # Добавлено обновление кулера
 
         # Рассчитываем общую стоимость
-        total_price = 0
+        total_price = 0.0
         if build.cpu:
             total_price += build.cpu.price
         if build.gpu:
@@ -261,10 +323,27 @@ def build_edit(request, pk):
             total_price += build.psu.price
         if build.case:
             total_price += build.case.price
+        if build.cooler:
+            total_price += build.cooler.price  # Добавляем цену кулера
         build.total_price = total_price
 
-        build.save()
-        return redirect('builds:build_detail', pk=build.pk)
+        try:
+            build.save()
+            return redirect('builds:build_detail', pk=build.pk)
+        except ValidationError as e:
+            return render(request, 'builds/build_edit.html', {
+                'build': build,
+                'error_message': f'Ошибка сохранения сборки: {e}',
+                'cpus': CPU.objects.all(),
+                'gpus': GPU.objects.all(),
+                'motherboards': Motherboard.objects.all(),
+                'rams': RAM.objects.all(),
+                'storages': Storage.objects.all(),
+                'psus': PSU.objects.all(),
+                'cases': Case.objects.all(),
+                'coolers': Cooler.objects.all(),  # Добавляем coolers
+            })
+
     else:
         # Отобразите форму с текущими значениями
         cpus = CPU.objects.all()
@@ -274,6 +353,7 @@ def build_edit(request, pk):
         storages = Storage.objects.all()
         psus = PSU.objects.all()
         cases = Case.objects.all()
+        coolers = Cooler.objects.all()
 
         context = {
             'build': build,
@@ -284,8 +364,10 @@ def build_edit(request, pk):
             'storages': storages,
             'psus': psus,
             'cases': cases,
+            'coolers': coolers,
         }
         return render(request, 'builds/build_edit.html', context)
+
 @login_required
 def checkout(request):
     """Оформление заказа."""

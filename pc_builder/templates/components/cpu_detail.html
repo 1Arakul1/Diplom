@@ -7,7 +7,7 @@
         <div class="row">
             <div class="col-md-4">
                 {% if cpu.image %}
-                    <img src="{{ cpu.image.url }}" alt="{{ cpu.model }}" class="img-fluid" style="max-width: 100%;">  <!-- Исправлено: используем .url -->
+                    <img src="{{ cpu.image.url }}" alt="{{ cpu.model }}" class="img-fluid" style="max-width: 100%;">
                 {% else %}
                     <p>Изображение отсутствует</p>
                 {% endif %}
@@ -23,7 +23,7 @@
                 <!-- Добавьте другие характеристики процессора, если они есть в вашей модели -->
                 <p>component_type: cpu</p>
                 <p>component_id: {{ cpu.pk }}</p>
-                <form id="add-to-cart-form" method="post" action="{% url 'builds:add_to_cart' %}">
+                <form id="add-to-cart-form" method="post" action="{% url 'builds:add_to_cart' %}" data-url="{% url 'builds:add_to_cart' %}">
                     {% csrf_token %}
                     <input type="hidden" name="component_type" value="cpu">
                     <input type="hidden" name="component_id" value="{{ cpu.pk }}">
@@ -38,41 +38,57 @@
         </div>
         <a href="{% url 'components:cpu_list' %}" class="btn btn-secondary mt-3">Вернуться к списку процессоров</a>
     </div>
+    <!-- Индикатор загрузки -->
+    <div id="loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 20px;">
+            Загрузка...
+        </div>
+    </div>
 
     <script>
         $(document).ready(function() {
+            function showLoading() {
+                $('#loading-overlay').show();
+            }
+
+            function hideLoading() {
+                $('#loading-overlay').hide();
+            }
+
             $('#add-to-cart-form').submit(function(event) {
-                event.preventDefault();  // Предотвращаем обычную отправку формы
+                event.preventDefault();
 
                 var form = $(this);
                 var url = form.data('url');
 
+                showLoading();
+
                 $.ajax({
                     type: "POST",
                     url: url,
-                    data: form.serialize(),  // Сериализуем данные формы
-                    dataType: 'json', // Указываем, что ожидаем JSON
+                    data: form.serialize(),
+                    dataType: 'json',
                     success: function(response) {
+                        hideLoading();
                         if (response.status === 'success') {
-                            // Показываем сообщение об успехе
-                            $('#add-to-cart-message').html('<div class="alert alert-success">' + response.message + '</div>');
-
-                            // Опционально: Обновляем содержимое корзины на странице (если нужно)
-
-                            // Через 3 секунды скрываем сообщение
-                            setTimeout(function() {
-                                $('#add-to-cart-message').empty();
-                            }, 3000);
+                            // Перенаправление на страницу корзины
+                            window.location.href = "{% url 'builds:cart' %}"; //  <-- Добавлено перенаправление
+                            // $('#add-to-cart-message').html('<div class="alert alert-success">' + response.message + '</div>');
+                            // if ($('#cart-item-count').length) {
+                            //     $('#cart-item-count').text(response.cart_item_count);
+                            // }
+                            // setTimeout(function() {
+                            //     $('#add-to-cart-message').empty();
+                            // }, 3000);
                         } else {
-                            // Показываем сообщение об ошибке
                             $('#add-to-cart-message').html('<div class="alert alert-danger">' + response.message + '</div>');
-                            setTimeout(function() {
+                             setTimeout(function() {
                                 $('#add-to-cart-message').empty();
                             }, 3000);
                         }
                     },
                     error: function(xhr, status, error) {
-                        // Обработка ошибок AJAX (например, проблемы с сервером)
+                        hideLoading();
                         $('#add-to-cart-message').html('<div class="alert alert-danger">Произошла ошибка при добавлении в корзину.</div>');
                         setTimeout(function() {
                             $('#add-to-cart-message').empty();

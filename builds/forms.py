@@ -12,6 +12,7 @@ class AddToCartForm(forms.Form):
             ('storage', 'Накопитель'),
             ('psu', 'Блок питания'),
             ('case', 'Корпус'),
+            ('cooler', 'Охлаждение'),  # Добавлено
             ('build', 'Сборка'),
         ],
         widget=forms.Select(attrs={'class': 'form-control'}),

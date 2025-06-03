@@ -27,8 +27,7 @@
                     <div class="card-body">
                         <h5 class="card-title">{{ storage.manufacturer }} {{ storage.model }}</h5>
                         <p class="card-text">
-                            <strong>Тип:</strong> {{ storage.type }}<br>
-                            <strong>Объем:</strong> {{ storage.capacity }} GB<br>
+                            <strong>Объем:</strong> {{ storage.capacity }} TB<br>
                             <strong>Цена:</strong> {{ storage.price }}
                         </p>
                         <a href="{% url 'components:storage_detail' storage.pk %}" class="btn btn-primary btn-sm">Подробнее</a>

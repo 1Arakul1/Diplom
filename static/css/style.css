@@ -1,10 +1,76 @@
 /* static/css/style.css */
 
+/* Основные стили для всего приложения */
+
 body {
-    font-family: sans-serif;
-    background-color: #f0f0f0;
+    background-color: #f9f6f2; /* Светлый бежевый фон */
+    color: #5b3a29; /* Тёмно-коричневый текст */
+    font-family: Arial, sans-serif;
 }
 
+.navbar {
+    background-color: #d9c4b1; /* Светло-коричневый фон навигации */
+}
+
+.nav-link {
+    color: #5b3a29; /* Тёмно-коричневый текст для ссылок */
+}
+
+.nav-link:hover {
+    color: #8e5b3a; /* Более светлый коричневый при наведении */
+}
+
+.container {
+    margin-top: 20px;
+}
+
+/* Стили для карточек */
+
+.card {
+    background-color: #ffffff; /* Белый фон карточек */
+    border: 1px solid #d1b2a1; /* Светло-коричневая рамка */
+    border-radius: 8px; /* Скруглённые углы */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Лёгкая тень */
+}
+
+.card-title {
+    color: #8e5b3a; /* Светлый коричневый для заголовков карточек */
+}
+
+.card-text {
+    color: #5b3a29; /* Тёмно-коричневый текст для описания */
+}
+
+.description {
+    color: #5b3a29; /* Тёмно-коричневый текст для описания */
+    font-size: 14px;
+    margin-top: 8px;
+}
+
+/* Стили для кнопок */
+
+.btn {
+    background-color: #8e5b3a; /* Светлый коричневый для кнопок */
+    color: #ffffff; /* Белый текст на кнопках */
+}
+
+.btn:hover {
+    background-color: #7a4e35; /* Более тёмный коричневый при наведении */
+}
+
+/* Стили для карточек в корзине */
+
+.cart-item {
+    border-bottom: 1px solid #d1b2a1; /* Светло-коричневая линия между элементами корзины */
+    padding: 10px 0;
+}
+
+.cart-item:last-child {
+    border-bottom: none; /* Убираем линию у последнего элемента */
+}
+
+
+/* Навигация */
 nav {
     background-color: #333;
     color: white;
@@ -20,13 +86,7 @@ nav a {
     margin-right: 10px;
 }
 
-nav div {
-    float: right; /* Устаревший способ, лучше использовать flexbox */
-}
-
-/* static/css/style.css */
-
-/* Стили для выпадающего меню (Bootstrap style) */
+/* Выпадающее меню (Bootstrap style) */
 .dropdown-menu {
     background-color: #fff;
     border: 1px solid rgba(0,0,0,.15);
@@ -53,8 +113,7 @@ nav div {
     color: #212529;
 }
 
-/* --- Стили для карточек (карточки компонентов) --- */
-
+/* Стили для карточек (карточки компонентов) */
 .cpu-card,
 .gpu-card,
 .motherboard-card,
@@ -106,7 +165,7 @@ nav div {
 
 /* Класс для отображения спиннера (добавляется JavaScript) */
 .db-app-loading.db-app-loading--visible {
-    display: flex;  /*  Чтобы спиннер был видимым */
+    display: flex;  /* Чтобы спиннер был видимым */
 }
 
 /* Gooey Spinner (опционально) */
@@ -149,7 +208,6 @@ nav div {
     margin-left: 16px;
     filter: blur(4px);
     background: #000;
-    border-radius: 50%;
 }
 
 @keyframes dot {
@@ -170,7 +228,7 @@ nav div {
     line-height: 0;
     width: 75px;
     height: 75px;
-    position: relative;
+        position: relative;
 }
 
 .db-loading-spinner__double-bounce {
@@ -198,9 +256,6 @@ nav div {
     }
 }
 
-/* static/css/style.css */
-/* ... (Ваши существующие стили) ... */
-
 /* Стили для карточек сборок */
 .build-card {
     border: 1px solid #ccc;
@@ -210,15 +265,15 @@ nav div {
 }
 
 .card-img-top {
-    object-fit: cover;  /*  Изображение заполнит всю область, обрезая края, если необходимо */
-    height: 200px;   /*  Фиксированная высота для изображений корпусов */
+    object-fit: cover;  /* Изображение заполнит всю область, обрезая края, если необходимо */
+    height: 200px;   /* Фиксированная высота для изображений корпусов */
 }
 
 .card-body {
-    flex-grow: 1;  /*  Разрешаем содержимому заполнять оставшееся пространство */
+    flex-grow: 1;  /* Разрешаем содержимому заполнять оставшееся пространство */
     display: flex;
     flex-direction: column;
-    justify-content: space-between;  /*  Размещаем элементы равномерно по высоте */
+    justify-content: space-between;  /* Размещаем элементы равномерно по высоте */
 }
 
 .card-title {
@@ -232,21 +287,47 @@ nav div {
 /* Стили для мини-карточек компонентов в build_detail */
 .component-card {
     border: 1px solid #ccc;
-    height: 250px;  /*  Фиксированная высота */
+    height: 250px;  /* Фиксированная высота */
     display: flex;
     flex-direction: column;
-    overflow: hidden; /*  Чтобы контент не выходил за пределы */
+    overflow: hidden; /* Чтобы контент не выходил за пределы */
 }
 
 .component-image {
-    object-fit: cover;  /*  Заполняем пространство */
-    height: 150px;  /*  Высота изображений */
+    object-fit: cover;  /* Заполняем пространство */
+    height: 150px;  /* Высота изображений */
 }
 
 .component-card .card-body {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center; /*  Выравнивание по центру по вертикали */
+    justify-content: center; /* Выравнивание по центру по вертикали */
     padding: 0.5rem;
 }
+
+.cpu-image {
+    height: 180px;
+    object-fit: contain;
+    padding: 10px;
+    background-color: #f8f9fa; /* светлый фон для изображений */
+}
+
+.cpu-card {
+    box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    transition: transform 0.15s ease-in-out;
+}
+
+.cpu-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+.description {
+    color: #333; /* тёмно-серый цвет текста */
+    background-color: #f8f9fa; /* светлый фон, если нужно */
+    font-size: 14px;
+    margin-top: 10px;
+}
+

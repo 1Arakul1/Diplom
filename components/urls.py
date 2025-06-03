@@ -26,5 +26,7 @@ urlpatterns = [
 
     path('cases/', views.case_list, name='case_list'),
     path('cases/<int:pk>/', views.case_detail, name='case_detail'),
+    path('coolers/', views.cooler_list, name='cooler_list'),
+    path('coolers/<int:pk>/', views.cooler_detail, name='cooler_detail'),
     
 ]
