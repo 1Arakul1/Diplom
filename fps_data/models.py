@@ -1,4 +1,4 @@
-# app: fps_data
+# fps_data\models.py
 from django.db import models
 class FPSData(models.Model):
     """

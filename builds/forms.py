@@ -20,3 +20,4 @@ class AddToCartForm(forms.Form):
     )
     component_id = forms.IntegerField(widget=forms.HiddenInput())  # ID компонента или сборки
     quantity = forms.IntegerField(min_value=1, initial=1, widget=forms.NumberInput(attrs={'class': 'form-control'}), label="Количество")
+    

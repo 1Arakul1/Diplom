@@ -21,7 +21,20 @@
                             <strong>Процессор:</strong> {{ build.cpu.manufacturer }} {{ build.cpu.model }}<br>
                             <!-- Добавьте другие компоненты, которые хотите отобразить -->
                         </p>
-                        <a href="{% url 'builds:build_detail' build.pk %}" class="btn btn-primary btn-sm">Подробнее</a> <!-- Ссылка на детализацию -->
+                        <a href="{% url 'builds:build_detail' build.pk %}" class="btn btn-primary btn-sm">Подробнее</a>
+                                        <form method="post" action="{% url 'builds:add_to_cart' %}" class="add-to-cart-form" data-case-id="{{ case.pk }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="component_type" value="case">
+                    <input type="hidden" name="component_id" value="{{ case.pk }}">
+                    <div class="form-group mb-2">
+                        <label for="quantity-{{ case.pk }}">Количество:</label>
+                        <input type="number" class="form-control" id="quantity-{{ case.pk }}" name="quantity" value="1" min="1">
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Добавить в корзину</button>
+                </form>
+                <div class="added-message text-success mt-2" id="added-message-{{ case.pk }}" style="display: none; font-weight: 600;">
+                    Товар в корзине
+                </div> <!-- Ссылка на детализацию -->
                     </div>
                 </div>
             </div>

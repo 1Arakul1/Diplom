@@ -1,5 +1,3 @@
-# builds/views.py
-# builds/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Build, CartItem
@@ -8,86 +6,111 @@ from .forms import AddToCartForm  # Импортируем форму
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib import messages  # Import messages
 from django.http import JsonResponse  # Импортируем JsonResponse
-from django.core.exceptions import ValidationError # Импортируем ValidationError
-from .models import CartItem
+from django.core.exceptions import ValidationError  # Импортируем ValidationError
+from decimal import Decimal  # Добавляем import Decimal
+from django.shortcuts import redirect
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
 
 
 # --- Вспомогательная функция для получения cart_items и total_price (переиспользуемая) ---
 def get_cart_context(request):
     """Получает контекст корзины для авторизованных пользователей."""
     cart_items = []
-    total_price = 0
+    total_price = Decimal('0.0')  # Инициализируем как Decimal
     if request.user.is_authenticated:
         cart_items = CartItem.objects.filter(user=request.user)
         for item in cart_items:
             total_price += item.get_total_price()
     return {'cart_items': cart_items, 'total_price': total_price}
 
+
 @login_required
 def cart_view(request):
     """Просмотр корзины."""
     cart_items = CartItem.objects.filter(user=request.user)
-    total_price = sum(item.get_total_price() for item in cart_items)
-    return render(request, 'builds/cart.html', {'cart_items': cart_items, 'total_price': total_price})
+    # total_price = sum(item.get_total_price() for item in cart_items) #Убрали, так как считаем в get_cart_context
+    context = {'cart_items': cart_items, 'total_price': get_cart_context(request)['total_price']}
+    return render(request, 'builds/cart.html', context)
+
 
 @login_required
+@require_POST
 def add_to_cart(request):
-    """Добавление товара в корзину."""
-    if request.method == 'POST':
-        component_type = request.POST.get('component_type')
-        component_id = request.POST.get('component_id')
+    component_type = request.POST.get('component_type')
+    component_id = request.POST.get('component_id')
+    quantity = request.POST.get('quantity', '1')
 
-        if not component_type or not component_id:
-            return redirect('builds:build_list')  # Или другая страница ошибки
+    if not component_type or not component_id:
+        error_response = {'success': False, 'error': 'Не указан товар'}
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse(error_response, status=400)
+        else:
+            # Для обычного запроса можно перенаправить с сообщением или показать ошибку
+            return redirect('builds:cart')
 
-        component_id = int(component_id)
+    try:
+        quantity = int(quantity)
+        if quantity < 1:
+            quantity = 1
+    except ValueError:
+        quantity = 1
 
-        try:
-            if component_type == 'cpu':
-                component = get_object_or_404(CPU, pk=component_id)
-            elif component_type == 'gpu':
-                component = get_object_or_404(GPU, pk=component_id)
-            elif component_type == 'motherboard':
-                component = get_object_or_404(Motherboard, pk=component_id)
-            elif component_type == 'ram':
-                component = get_object_or_404(RAM, pk=component_id)
-            elif component_type == 'storage':
-                component = get_object_or_404(Storage, pk=component_id)
-            elif component_type == 'psu':
-                component = get_object_or_404(PSU, pk=component_id)
-            elif component_type == 'case':
-                component = get_object_or_404(Case, pk=component_id)
-            elif component_type == 'cooler':
-                component = get_object_or_404(Cooler, pk=component_id)
-            else:
-                return redirect('builds:build_list') # Или другая страница ошибки
+    component_id = int(component_id)
 
-        except (CPU.DoesNotExist, GPU.DoesNotExist, Motherboard.DoesNotExist, RAM.DoesNotExist, Storage.DoesNotExist, PSU.DoesNotExist, Case.DoesNotExist, Cooler.DoesNotExist):
-            return redirect('builds:build_list')  # Или другая страница ошибки
+    component_models = {
+        'cpu': CPU,
+        'gpu': GPU,
+        'motherboard': Motherboard,
+        'ram': RAM,
+        'storage': Storage,
+        'psu': PSU,
+        'case': Case,
+        'cooler': Cooler,
+    }
 
-        #  Важно:  Получаем текущий CartItem для данного товара.
-        cart_item, created = CartItem.objects.get_or_create(
-            user=request.user,
-            cpu=component if component_type == 'cpu' else None,
-            gpu=component if component_type == 'gpu' else None,
-            motherboard=component if component_type == 'motherboard' else None,
-            ram=component if component_type == 'ram' else None,
-            storage=component if component_type == 'storage' else None,
-            psu=component if component_type == 'psu' else None,
-            case=component if component_type == 'case' else None,
-            cooler=component if component_type == 'cooler' else None,  # Добавлено cooler
-        )
+    component_model = component_models.get(component_type)
+    if not component_model:
+        error_response = {'success': False, 'error': 'Неверный тип товара'}
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse(error_response, status=400)
+        else:
+            return redirect('builds:cart')
 
-        if not created:
-            cart_item.quantity += 1
-            cart_item.save()
+    try:
+        component = component_model.objects.get(pk=component_id)
+    except component_model.DoesNotExist:
+        error_response = {'success': False, 'error': 'Товар не найден'}
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse(error_response, status=404)
+        else:
+            return redirect('builds:cart')
 
+    # Добавление в корзину (пример)
+    cart_item, created = CartItem.objects.get_or_create(
+        user=request.user,
+        cpu=component if component_type == 'cpu' else None,
+        gpu=component if component_type == 'gpu' else None,
+        motherboard=component if component_type == 'motherboard' else None,
+        ram=component if component_type == 'ram' else None,
+        storage=component if component_type == 'storage' else None,
+        psu=component if component_type == 'psu' else None,
+        case=component if component_type == 'case' else None,
+        cooler=component if component_type == 'cooler' else None,
+    )
+    if not created:
+        cart_item.quantity += quantity
+    else:
+        cart_item.quantity = quantity
+    cart_item.save()
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'success': True})
+    else:
         return redirect('builds:cart')
 
 
-    return redirect('builds:build_list')  # Обработка GET запросов (или другая страница по умолчанию)
-
-    
 @login_required
 def remove_from_cart(request, item_id):
     """Удаление товара из корзины."""
@@ -117,6 +140,7 @@ def build_list(request):
     }
     return render(request, 'builds/build_list.html', context)
 
+
 def build_detail(request, pk):
     build = get_object_or_404(Build, pk=pk)
     cart_context = get_cart_context(request)  # добавляем корзину в контекст
@@ -125,6 +149,7 @@ def build_detail(request, pk):
         **cart_context  # Распаковываем cart_context (cart_items, total_price)
     }
     return render(request, 'builds/build_detail.html', context)
+
 
 def build_create(request):
     if request.method == 'POST':
@@ -186,7 +211,7 @@ def build_create(request):
 
 
         # Создаем сборку
-        total_price = 0.0
+        total_price = Decimal('0.0')
         if cpu:
             total_price += cpu.price
         if gpu:
@@ -227,6 +252,7 @@ def build_create(request):
         coolers = Cooler.objects.all()  # Получаем все кулеры
         context = {'cpus': cpus, 'gpus': gpus, 'motherboards': motherboards, 'rams': rams, 'storages': storages, 'psus': psus, 'cases': cases, 'coolers': coolers}  # Добавляем coolers в context
         return render(request, 'builds/build_create.html', context)
+
 
 def build_edit(request, pk):
     build = get_object_or_404(Build, pk=pk)
@@ -308,7 +334,7 @@ def build_edit(request, pk):
         build.cooler = cooler # Добавлено обновление кулера
 
         # Рассчитываем общую стоимость
-        total_price = 0.0
+        total_price = Decimal('0.0')
         if build.cpu:
             total_price += build.cpu.price
         if build.gpu:

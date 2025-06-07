@@ -39,15 +39,19 @@ class Build(models.Model):
             price += self.psu.price
         if self.case:
             price += self.case.price
-        if self.cooler: # Добавляем цену кулера
+        if self.cooler:
             price += self.cooler.price
         return price
-    class Meta:
+
+class Meta:
         verbose_name = "Сборка"
         verbose_name_plural = "Сборки"
 
 class CartItem(models.Model):
     """Элемент в корзине."""
+    build = models.ForeignKey(Build, null=True, blank=True, on_delete=models.CASCADE)
+    item_type = models.CharField(max_length=50)  # например
+    quantity = models.PositiveIntegerField(default=1)
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Пользователь")
     cpu = models.ForeignKey(CPU, on_delete=models.CASCADE, verbose_name="Процессор", blank=True, null=True)
     gpu = models.ForeignKey(GPU, on_delete=models.CASCADE, verbose_name="Видеокарта", blank=True, null=True)

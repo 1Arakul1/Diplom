@@ -24,11 +24,26 @@
             <div class="card-body d-flex flex-column">
                 <h5 class="card-title">{{ cpu.manufacturer }} {{ cpu.model }}</h5>
                 <p class="card-text mb-4">
-                    <strong>Частота:</strong> {{ cpu.clock_speed }} GHz<br>
+                    <strong>Частота:</strong> {{ cpu.frequency }} GHz<br>
                     <strong>Ядер:</strong> {{ cpu.cores }}<br>
                     <strong>Цена:</strong> {{ cpu.price }} ₽
                 </p>
-                <a href="{% url 'components:cpu_detail' cpu.pk %}" class="btn btn-primary mt-auto">Подробнее</a>
+                <a href="{% url 'components:cpu_detail' cpu.pk %}" class="btn btn-primary mt-auto mb-3">Подробнее</a>
+<form method="post" action="{% url 'builds:add_to_cart' %}" class="add-to-cart-form" data-cpu-id="{{ cpu.pk }}">
+    {% csrf_token %}
+    <input type="hidden" name="component_type" value="cpu">
+    <input type="hidden" name="component_id" value="{{ cpu.pk }}">
+    <input type="hidden" name="build_id" value="{{ build.id }}">  <!-- Скрытое поле для build_id -->
+    <div class="form-group mb-2">
+        <label for="quantity-{{ cpu.pk }}">Количество:</label>
+        <input type="number" class="form-control" id="quantity-{{ cpu.pk }}" name="quantity" value="1" min="1">
+    </div>
+    <button type="submit" class="btn btn-success">Добавить в корзину</button>
+</form>
+
+                <div class="added-message text-success mt-2" id="added-message-{{ cpu.pk }}" style="display: none; font-weight: 600;">
+                    Товар в корзине
+                </div>
             </div>
         </div>
     </div>
@@ -80,15 +95,51 @@
 {% endif %}
 
 <script>
-    if (typeof showLoading === 'function') {
-        showLoading();
-    }
-    window.addEventListener('load', function() {
-        if (typeof hideLoading === 'function') {
-            hideLoading();
-        }
+document.addEventListener('DOMContentLoaded', function() {
+    const forms = document.querySelectorAll('.add-to-cart-form');
+
+    forms.forEach(form => {
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const cpuId = form.dataset.cpuId;
+            const messageElem = document.getElementById('added-message-' + cpuId);
+
+            const formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value,
+                },
+                body: formData,
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Ошибка сети');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    messageElem.style.display = 'block';
+                    setTimeout(() => {
+                        messageElem.style.display = 'none';
+                    }, 3000);
+                } else {
+                    alert(data.error || 'Не удалось добавить товар');
+                }
+            })
+            .catch(error => {
+                alert('Ошибка при добавлении товара в корзину');
+                console.error(error);
+            });
+        });
     });
+});
 </script>
 
 {% endblock %}
+
 

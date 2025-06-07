@@ -1,92 +1,204 @@
-/* static/css/style.css */
+/* CSS Reset (Можно заменить на Normalize.css) */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
-/* Основные стили для всего приложения */
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ol,
+ul {
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+}
 
+ol,
+ul {
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* === Конец CSS Reset === */
+
+/* ===  Переменные CSS === */
+:root {
+  --primary-color: #5b3a29; /* Тёмно-коричневый текст */
+  --secondary-color: #d9c4b1; /* Светло-коричневый (навигация, акценты) */
+  --background-color: #f9f6f2; /* Светлый бежевый фон */
+  --card-background: #ffffff; /* Белый фон карточек */
+  --border-color: #d1b2a1; /* Светло-коричневая рамка */
+  --button-color: #8e5b3a; /* Светлый коричневый (кнопки) */
+  --button-hover-color: #7a4e35; /* Темнее при наведении */
+  --link-color: #5b3a29;
+  --link-hover-color: #8e5b3a;
+  --font-family: Arial, sans-serif;
+}
+
+/* === Общие стили === */
 body {
-    background-color: #f9f6f2; /* Светлый бежевый фон */
-    color: #5b3a29; /* Тёмно-коричневый текст */
-    font-family: Arial, sans-serif;
-}
-
-.navbar {
-    background-color: #d9c4b1; /* Светло-коричневый фон навигации */
-}
-
-.nav-link {
-    color: #5b3a29; /* Тёмно-коричневый текст для ссылок */
-}
-
-.nav-link:hover {
-    color: #8e5b3a; /* Более светлый коричневый при наведении */
+  background-color: var(--background-color);
+  color: var(--primary-color);
+  font-family: var(--font-family);
+  line-height: 1.6; /* Улучшенная читаемость */
 }
 
 .container {
-    margin-top: 20px;
+  margin-top: 20px;
 }
 
-/* Стили для карточек */
-
-.card {
-    background-color: #ffffff; /* Белый фон карточек */
-    border: 1px solid #d1b2a1; /* Светло-коричневая рамка */
-    border-radius: 8px; /* Скруглённые углы */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Лёгкая тень */
+/* === Навигация === */
+.navbar {
+  background-color: var(--secondary-color);
+  padding: 0.5rem 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Легкая тень */
 }
 
-.card-title {
-    color: #8e5b3a; /* Светлый коричневый для заголовков карточек */
+.navbar-brand {
+    color: var(--primary-color);
+    font-weight: bold;
 }
 
-.card-text {
-    color: #5b3a29; /* Тёмно-коричневый текст для описания */
+.nav-link {
+  color: var(--link-color);
 }
 
-.description {
-    color: #5b3a29; /* Тёмно-коричневый текст для описания */
-    font-size: 14px;
-    margin-top: 8px;
+.nav-link:hover {
+  color: var(--link-hover-color);
 }
 
-/* Стили для кнопок */
-
+/* === Кнопки === */
 .btn {
-    background-color: #8e5b3a; /* Светлый коричневый для кнопок */
-    color: #ffffff; /* Белый текст на кнопках */
+  background-color: var(--button-color);
+  color: #ffffff;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Небольшая тень */
 }
 
 .btn:hover {
-    background-color: #7a4e35; /* Более тёмный коричневый при наведении */
+  background-color: var(--button-hover-color);
 }
 
-/* Стили для карточек в корзине */
-
-.cart-item {
-    border-bottom: 1px solid #d1b2a1; /* Светло-коричневая линия между элементами корзины */
-    padding: 10px 0;
+.btn-primary {
+  background-color: var(--button-color);
 }
 
-.cart-item:last-child {
-    border-bottom: none; /* Убираем линию у последнего элемента */
+.btn-primary:hover {
+    background-color: var(--button-hover-color);
 }
 
-
-/* Навигация */
-nav {
-    background-color: #333;
-    color: white;
-    padding: 10px;
-    display: flex; /* Используем flexbox */
-    justify-content: space-between; /* Распределяем пространство между элементами */
-    align-items: center; /* Выравниваем элементы по вертикали */
+/* === Карточки === */
+.card {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out; /* Плавная анимация */
 }
 
-nav a {
-    color: white;
-    text-decoration: none;
-    margin-right: 10px;
+.card:hover {
+  transform: translateY(-3px); /* Небольшое поднятие при наведении */
 }
 
-/* Выпадающее меню (Bootstrap style) */
+.card-img-top {
+  width: 100%;
+  height: 200px;
+  object-fit: cover; /* Вариант: contain */
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+}
+
+.card-body {
+  padding: 1rem;
+}
+
+.card-title {
+  color: var(--primary-color);
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.card-text {
+    color: var(--primary-color);
+    font-size: 0.9rem;
+}
+
+/* === Стили для карточек сборок (build-card) === */
+.build-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Важно для равной высоты карточек */
+}
+
+.build-card .card-body {
+    flex-grow: 1; /* Карточки заполняют доступное пространство */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Размещаем контент равномерно */
+}
+
+/* Кнопка "Подробнее" в карточке сборки */
+.build-card .btn {
+    align-self: flex-start;
+    margin-top: 1rem; /* Отступ сверху */
+}
+
+/* === Пагинация === */
+.pagination {
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.page-link {
+  color: var(--link-color);
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+}
+
+.page-item.active .page-link {
+  background-color: var(--button-color);
+  border-color: var(--button-color);
+  color: #fff;
+}
+
+.page-link:hover {
+  color: var(--link-hover-color);
+  background-color: #f2f2f2; /* Небольшое изменение при наведении */
+}
+
+.page-item.disabled .page-link {
+    color: #aaa;
+    background-color: #eee;
+    border-color: #ddd;
+}
+
+/* === Адаптивность === */
+@media (max-width: 768px) {
+  .col-md-4 {
+    margin-bottom: 1rem; /* Дополнительный отступ на маленьких экранах */
+  }
+
+  .card-img-top {
+    height: 150px; /* Меньшая высота изображений на мобильных устройствах */
+  }
+}
+
+/* === Dropdown (из Bootstrap) === */
 .dropdown-menu {
     background-color: #fff;
     border: 1px solid rgba(0,0,0,.15);
@@ -100,10 +212,6 @@ nav a {
     padding: 0.5rem 1rem;
     text-decoration: none;
     display: block;
-    clear: both;
-    font-weight: 400;
-    text-align: inherit;
-    white-space: nowrap;
     background-color: transparent;
     border: 0;
 }
@@ -113,7 +221,7 @@ nav a {
     color: #212529;
 }
 
-/* Стили для карточек (карточки компонентов) */
+/* === Component Cards === */
 .cpu-card,
 .gpu-card,
 .motherboard-card,
@@ -228,7 +336,7 @@ nav a {
     line-height: 0;
     width: 75px;
     height: 75px;
-        position: relative;
+    position: relative;
 }
 
 .db-loading-spinner__double-bounce {
@@ -256,78 +364,17 @@ nav a {
     }
 }
 
-/* Стили для карточек сборок */
-.build-card {
-    border: 1px solid #ccc;
-    height: 100%;  /* Занимает всю высоту родительского элемента */
+/* === Flexbox для строки с карточками (если нужно) === */
+.row {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
+    margin-left: -15px;  /* Компенсация отрицательного отступа Bootstrap */
+    margin-right: -15px; /* Компенсация отрицательного отступа Bootstrap */
 }
 
-.card-img-top {
-    object-fit: cover;  /* Изображение заполнит всю область, обрезая края, если необходимо */
-    height: 200px;   /* Фиксированная высота для изображений корпусов */
-}
-
-.card-body {
-    flex-grow: 1;  /* Разрешаем содержимому заполнять оставшееся пространство */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;  /* Размещаем элементы равномерно по высоте */
-}
-
-.card-title {
-    margin-bottom: 0.5rem;
-}
-
-.card-text {
-    margin-bottom: 1rem;
-}
-
-/* Стили для мини-карточек компонентов в build_detail */
-.component-card {
-    border: 1px solid #ccc;
-    height: 250px;  /* Фиксированная высота */
-    display: flex;
-    flex-direction: column;
-    overflow: hidden; /* Чтобы контент не выходил за пределы */
-}
-
-.component-image {
-    object-fit: cover;  /* Заполняем пространство */
-    height: 150px;  /* Высота изображений */
-}
-
-.component-card .card-body {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center; /* Выравнивание по центру по вертикали */
-    padding: 0.5rem;
-}
-
-.cpu-image {
-    height: 180px;
-    object-fit: contain;
-    padding: 10px;
-    background-color: #f8f9fa; /* светлый фон для изображений */
-}
-
-.cpu-card {
-    box-shadow: 0 0 8px rgba(0,0,0,0.1);
-    border-radius: 8px;
-    transition: transform 0.15s ease-in-out;
-}
-
-.cpu-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-}
-
-.description {
-    color: #333; /* тёмно-серый цвет текста */
-    background-color: #f8f9fa; /* светлый фон, если нужно */
-    font-size: 14px;
-    margin-top: 10px;
+.col-md-4 {
+    padding-left: 15px;   /* Возврат отступа для колонки */
+    padding-right: 15px;  /* Возврат отступа для колонки */
+    display: flex;      /* Добавлено для выравнивания высоты карточек */
 }
 
