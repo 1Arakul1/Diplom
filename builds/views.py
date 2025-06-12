@@ -17,7 +17,12 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse 
 from django.utils import timezone
-from .models import Order, OrderItem 
+from .models import Order, OrderItem
+from .forms import OrderUpdateForm
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Q  # Import Q
+from django.contrib.admin.views.decorators import staff_member_required 
+
 
 
 # --- Вспомогательная функция для получения cart_items и total_price (переиспользуемая) ---
@@ -417,6 +422,89 @@ def build_edit(request, pk):
         }
         return render(request, 'builds/build_edit.html', context)
 
+# Функция для проверки, является ли пользователь сотрудником
+def is_employee(user):
+    return user.is_staff
+
+# Представление для сотрудников для просмотра и изменения заказов
+@login_required
+@user_passes_test(is_employee)
+def employee_order_list(request):
+    query = request.GET.get('q')
+    orders = Order.objects.filter(is_completed=False) # Начинаем с незавершенных заказов
+
+    if query:
+        orders = orders.filter(
+            Q(track_number__icontains=query) |
+            Q(user__username__icontains=query) |
+            Q(email__icontains=query)
+        )
+    orders = orders.order_by('-order_date')
+
+    # Пагинация
+    paginator = Paginator(orders, 10)  # По 10 заказов на страницу
+    page_number = request.GET.get('page')
+    try:
+        page_obj = paginator.get_page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.get_page(1)
+    except EmptyPage:
+        page_obj = paginator.get_page(paginator.num_pages)
+
+    return render(request, 'builds/employee_order_list.html', {'page_obj': page_obj, 'query': query})
+
+# Представление для обновления статуса заказа
+@login_required
+@user_passes_test(is_employee)
+def employee_order_update(request, order_id):
+    order = get_object_or_404(Order, pk=order_id)
+    if request.method == 'POST':
+        form = OrderUpdateForm(request.POST, instance=order)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Статус заказа #{order.pk} успешно изменен.")
+            return redirect('builds:employee_order_list')
+    else:
+        form = OrderUpdateForm(instance=order)
+    return render(request, 'builds/employee_order_update.html', {'form': form, 'order': order})
+
+@login_required
+@user_passes_test(is_employee)
+def employee_order_complete(request, order_id):
+    order = get_object_or_404(Order, pk=order_id)
+    order.is_completed = True
+    order.status = 'delivered'  # Задаем статус "Заказ доставлен, заберите его"
+    order.save()
+    messages.success(request, f"Заказ #{order.pk} отмечен как выданный.")
+    return redirect('builds:employee_order_list')
+
+@login_required
+@user_passes_test(is_employee)
+def employee_order_history(request):
+    query = request.GET.get('q')
+    orders = Order.objects.filter(is_completed=True) # Начинаем с завершенных заказов
+
+    if query:
+        orders = orders.filter(
+            Q(track_number__icontains=query) |
+            Q(user__username__icontains=query) |
+            Q(email__icontains=query)
+        )
+
+    orders = orders.order_by('-order_date')
+
+    # Пагинация
+    paginator = Paginator(orders, 10)  # По 10 заказов на страницу
+    page_number = request.GET.get('page')
+    try:
+        page_obj = paginator.get_page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.get_page(1)
+    except EmptyPage:
+        page_obj = paginator.get_page(paginator.num_pages)
+
+    return render(request, 'builds/employee_order_history.html', {'page_obj': page_obj, 'query': query}) # Передаем query
+
 @login_required
 def checkout(request):
     cart_items = CartItem.objects.filter(user=request.user)
@@ -444,15 +532,14 @@ def checkout(request):
             total_amount=total_price,
             order_date=timezone.now()
         )
-        #order.save() # Не нужно, т.к. используем Order.objects.create()
 
         # Создание позиций заказа
         for item in cart_items:
             OrderItem.objects.create(
                 order=order,
-                item=str(item),  # Преобразуем товар в строку
+                item=str(item),  # Преобразуем товар в строку (потенциально нужно настроить строковое представление)
                 quantity=item.quantity,
-                price=item.get_total_price() / item.quantity
+                price=item.get_total_price() / item.quantity  # Цена за единицу
             )
 
         # Очистка корзины после оформления заказа
@@ -483,9 +570,41 @@ def checkout(request):
 def order_confirmation(request):
     success = request.GET.get('success')
     track_number = request.GET.get('track_number')
+
     if success == 'True':
         messages.success(request, f"Заказ успешно оформлен! Проверьте вашу электронную почту. Ваш трек-номер: {track_number}")
     elif success == 'False':
         messages.error(request, "Заказ оформлен, но не удалось отправить уведомление.")
 
     return render(request, 'builds/order_confirmation.html', {'track_number': track_number})
+
+@login_required
+def my_orders(request):
+    orders = Order.objects.filter(user=request.user, is_completed=False).order_by('-order_date')  # Показывать только невыданные заказы
+    return render(request, 'builds/my_orders.html', {'orders': orders})
+
+
+def index(request):
+    # Пагинация для главной страницы
+    cpu_list = CPU.objects.all()
+    paginator = Paginator(cpu_list, 6)  # Показывать по 6 CPU на странице
+
+    page = request.GET.get('page')
+    try:
+        cpus = paginator.page(page)
+    except PageNotAnInteger:
+        # Если страница не является целым числом, возвращаем первую страницу.
+        cpus = paginator.page(1)
+    except EmptyPage:
+        # Если страница больше максимальной, возвращаем последнюю страницу.
+        cpus = paginator.page(paginator.num_pages)
+
+    context = {'cpus': cpus}
+
+    if request.user.is_authenticated:
+        if is_employee(request.user):
+            return render(request, 'builds/employee_index.html', context)
+        else:
+            return render(request, 'builds/index.html', context)
+    else:
+        return render(request, 'builds/index.html', context)

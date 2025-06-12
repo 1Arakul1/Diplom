@@ -13,5 +13,12 @@ urlpatterns = [
     path('add_to_cart/', views.add_to_cart, name='add_to_cart'),
     path('<int:pk>/edit/', views.build_edit, name='build_edit'),
     path('checkout/', views.checkout, name='checkout'),
-    path('order_confirmation/', views.order_confirmation, name='order_confirmation'),  # Добавлено! # Добавлен путь для редактирования
-]
+    path('order_confirmation/', views.order_confirmation, name='order_confirmation'),
+    path('checkout/', views.checkout, name='checkout'),
+    path('order_confirmation/', views.order_confirmation, name='order_confirmation'),
+    path('employee/orders/', views.employee_order_list, name='employee_order_list'),
+    path('employee/orders/<int:order_id>/update/', views.employee_order_update, name='employee_order_update'),
+    path('employee/orders/<int:order_id>/complete/', views.employee_order_complete, name='employee_order_complete'),
+    path('employee/orders/history/', views.employee_order_history, name='employee_order_history'), # Добавим URL для выдачи заказа
+]  # Добавлено! # Добавлен путь для редактирования
+

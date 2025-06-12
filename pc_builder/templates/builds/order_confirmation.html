@@ -6,9 +6,11 @@
 
         {% if messages %}
             {% for message in messages %}
-                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" role="alert">
-                    {{ message }}
-                </div>
+                {% if message.tags != 'success' %}  {# Пропускаем сообщения с тегом 'success' #}
+                    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" role="alert">
+                        {{ message }}
+                    </div>
+                {% endif %}
             {% endfor %}
         {% endif %}
 

@@ -110,6 +110,13 @@ class CartItem(models.Model):
 
 class Order(models.Model):
     """Модель для хранения информации о заказе."""
+    STATUS_CHOICES = [
+        ('pending', 'Заказ на рассмотрении'),
+        ('confirmed', 'Заказ подтверждён'),
+        ('assembling', 'Заказ собирается'),
+        ('delivered', 'Заказ доставлен, заберите его'),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Пользователь")
     email = models.EmailField(verbose_name="Email")
     delivery_option = models.CharField(max_length=50, verbose_name="Способ доставки")
@@ -118,6 +125,13 @@ class Order(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Общая сумма")
     order_date = models.DateTimeField(verbose_name="Дата заказа")
     track_number = models.CharField(max_length=8, unique=True, blank=True, null=True, verbose_name="Трек-номер")
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+        verbose_name="Статус заказа"
+    )
+    is_completed = models.BooleanField(default=False, verbose_name="Заказ выдан")
 
     def save(self, *args, **kwargs):
         if not self.track_number:
@@ -129,12 +143,12 @@ class Order(models.Model):
         return str(uuid.uuid4().hex)[:8].upper()
 
     def __str__(self):
-        return f"Заказ #{self.pk} - {self.user.username} - {self.track_number}"
+        return f"Заказ #{self.pk} - {self.user.username} - {self.track_number} ({self.status})"
 
     class Meta:
         verbose_name = "Заказ"
         verbose_name_plural = "Заказы"
-        ordering = ['-order_date'] # Сортировка по дате заказа (от новых к старым)
+        ordering = ['-order_date']
 
 class OrderItem(models.Model):
     """Модель для хранения позиций заказа."""

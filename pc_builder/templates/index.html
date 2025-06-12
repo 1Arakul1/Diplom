@@ -9,10 +9,18 @@
                 <p class="lead mb-4 animate__animated animate__fadeInUp">Здесь вы можете собрать компьютер своей мечты, просматривать комплектующие, создавать конфигурации и управлять своей корзиной.</p>
 
                 {% if user.is_authenticated %}
-                    <p class="mb-3 animate__animated animate__fadeIn">Привет, <span class="fw-bold">{{ user.username }}</span>!</p>
-                    <p>
-                        <a href="{% url 'users:logout' %}" class="btn btn-outline-danger animate__animated animate__fadeIn">Выйти</a>
-                    </p>
+                    {% if user.is_staff %}
+                        <p class="mb-3 animate__animated animate__fadeIn">Привет, <span class="fw-bold">{{ user.username }}</span> (Сотрудник)!</p>
+                        <p>
+                            <a href="{% url 'builds:employee_order_list' %}" class="btn btn-primary animate__animated animate__fadeIn">Управление заказами</a>
+                            <a href="{% url 'users:logout' %}" class="btn btn-outline-danger animate__animated animate__fadeIn">Выйти</a>
+                        </p>
+                    {% else %}
+                        <p class="mb-3 animate__animated animate__fadeIn">Привет, <span class="fw-bold">{{ user.username }}</span>!</p>
+                        <p>
+                            <a href="{% url 'users:logout' %}" class="btn btn-outline-danger animate__animated animate__fadeIn">Выйти</a>
+                        </p>
+                    {% endif %}
                 {% else %}
                     <p>
                         <a href="{% url 'users:register' %}" class="btn btn-primary me-2 animate__animated animate__fadeIn">Зарегистрироваться</a>

@@ -14,21 +14,22 @@ import string # Импортируем string
 from .utils import send_registration_email  # Import the email function
 from django.contrib.auth import authenticate, login  # Import login
 from django.contrib.auth import get_user_model  # Get the User model
+from builds.models import Build, CartItem, Order
 
 
 
 
 @login_required
 def profile(request):
-    user = request.user
-    builds = Build.objects.filter(user=user)
-    cart_items = CartItem.objects.filter(user=user)
-    context = {
-        'user': user,
+    builds = Build.objects.filter(user=request.user)
+    cart_items = CartItem.objects.filter(user=request.user)
+    orders = Order.objects.filter(user=request.user, is_completed=False) # Получаем только невыданные заказы
+    return render(request, 'users/profile.html', {
+        'user': request.user,
         'builds': builds,
         'cart_items': cart_items,
-    }
-    return render(request, 'users/profile.html', context)
+        'orders': orders, # Передаем список заказов в шаблон
+    })
 
 def register(request):
     if request.method == 'POST':

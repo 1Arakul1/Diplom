@@ -1,5 +1,12 @@
 # builds/forms.py
 from django import forms
+from django import forms
+from .models import Order
+
+class OrderUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Order
+        fields = ['status']
 
 class AddToCartForm(forms.Form):
     """Форма для добавления товара в корзину."""
