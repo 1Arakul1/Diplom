@@ -1,9 +1,8 @@
-# builds/models.py
 from django.db import models
 from django.contrib.auth.models import User
-from components.models import CPU, GPU, Motherboard, RAM, Storage, PSU, Case, Cooler  # Импортируем Cooler
+from components.models import CPU, GPU, Motherboard, RAM, Storage, PSU, Case, Cooler
 from django.contrib import admin
-
+import uuid  # Импортируем модуль uuid
 
 class Build(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Пользователь")
@@ -15,15 +14,13 @@ class Build(models.Model):
     psu = models.ForeignKey(PSU, on_delete=models.SET_NULL, verbose_name="PSU", blank=True, null=True)
     case = models.ForeignKey(Case, on_delete=models.SET_NULL, verbose_name="Case", blank=True, null=True)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Общая стоимость", blank=True, null=True)
-    cooler = models.ForeignKey(Cooler, on_delete=models.SET_NULL, verbose_name="Охлаждение", blank=True, null=True, related_name='builds')  # Добавляем поле cooler
-    # ... (остальные поля)
+    cooler = models.ForeignKey(Cooler, on_delete=models.SET_NULL, verbose_name="Охлаждение", blank=True, null=True, related_name='builds')
 
     def __str__(self):
         return f"Сборка {self.pk} - {self.cpu.model if self.cpu else 'Без CPU'}"
 
-    @admin.display(description='Общая стоимость')  # <---- Добавляем admin.display
+    @admin.display(description='Общая стоимость')
     def get_total_price(self):
-        """Вычисляет общую стоимость сборки."""
         price = 0
         if self.cpu:
             price += self.cpu.price
@@ -43,7 +40,7 @@ class Build(models.Model):
             price += self.cooler.price
         return price
 
-class Meta:
+    class Meta:
         verbose_name = "Сборка"
         verbose_name_plural = "Сборки"
 
@@ -60,8 +57,7 @@ class CartItem(models.Model):
     storage = models.ForeignKey(Storage, on_delete=models.CASCADE, verbose_name="Накопитель", blank=True, null=True)
     psu = models.ForeignKey(PSU, on_delete=models.CASCADE, verbose_name="Блок питания", blank=True, null=True)
     case = models.ForeignKey(Case, on_delete=models.CASCADE, verbose_name="Корпус", blank=True, null=True)
-    cooler = models.ForeignKey(Cooler, on_delete=models.CASCADE, verbose_name="Охлаждение", blank=True, null=True) # Добавлено поле cooler
-    build = models.ForeignKey(Build, on_delete=models.CASCADE, verbose_name="Сборка", blank=True, null=True)
+    cooler = models.ForeignKey(Cooler, on_delete=models.CASCADE, verbose_name="Охлаждение", blank=True, null=True)
     quantity = models.PositiveIntegerField(default=1, verbose_name="Количество")
 
     def __str__(self):
@@ -82,15 +78,14 @@ class CartItem(models.Model):
         elif self.case:
             return f"Case {self.case.manufacturer} {self.case.model} для {self.user.username}"
         elif self.cooler:
-            return f"Cooler {self.cooler.manufacturer} {self.cooler.model} для {self.user.username}" # Добавлено отображение cooler
+            return f"Cooler {self.cooler.manufacturer} {self.cooler.model} для {self.user.username}"
         else:
             return f"Неизвестный товар в корзине для {self.user.username}"
 
     def get_total_price(self):
-        """Вычисляет общую стоимость элемента корзины."""
         price = 0
         if self.build:
-            price = self.build.total_price * self.quantity  # Используем total_price сборки и умножаем на quantity
+            price = self.build.total_price * self.quantity
         elif self.cpu:
             price = self.cpu.price
         elif self.gpu:
@@ -106,9 +101,51 @@ class CartItem(models.Model):
         elif self.case:
             price = self.case.price
         elif self.cooler:
-            price = self.cooler.price # Добавляем цену кулера
-        return price * self.quantity  # умножаем на количество
+            price = self.cooler.price
+        return price * self.quantity
 
     class Meta:
         verbose_name = "Элемент корзины"
         verbose_name_plural = "Элементы корзины"
+
+class Order(models.Model):
+    """Модель для хранения информации о заказе."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Пользователь")
+    email = models.EmailField(verbose_name="Email")
+    delivery_option = models.CharField(max_length=50, verbose_name="Способ доставки")
+    payment_method = models.CharField(max_length=50, verbose_name="Способ оплаты")
+    address = models.CharField(max_length=255, verbose_name="Адрес доставки", blank=True, null=True)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Общая сумма")
+    order_date = models.DateTimeField(verbose_name="Дата заказа")
+    track_number = models.CharField(max_length=8, unique=True, blank=True, null=True, verbose_name="Трек-номер")
+
+    def save(self, *args, **kwargs):
+        if not self.track_number:
+            self.track_number = self.generate_track_number()
+        super().save(*args, **kwargs)
+
+    def generate_track_number(self):
+        """Генерирует уникальный 8-значный трек-номер."""
+        return str(uuid.uuid4().hex)[:8].upper()
+
+    def __str__(self):
+        return f"Заказ #{self.pk} - {self.user.username} - {self.track_number}"
+
+    class Meta:
+        verbose_name = "Заказ"
+        verbose_name_plural = "Заказы"
+        ordering = ['-order_date'] # Сортировка по дате заказа (от новых к старым)
+
+class OrderItem(models.Model):
+    """Модель для хранения позиций заказа."""
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, verbose_name="Заказ")
+    item = models.CharField(max_length=255, verbose_name="Наименование товара")
+    quantity = models.PositiveIntegerField(default=1, verbose_name="Количество")
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Цена")
+
+    def __str__(self):
+        return f"{self.item} x {self.quantity} в заказе #{self.order.pk}"
+
+    class Meta:
+        verbose_name = "Позиция заказа"
+        verbose_name_plural = "Позиции заказа"

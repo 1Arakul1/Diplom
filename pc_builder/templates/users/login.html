@@ -1,4 +1,3 @@
-<!-- templates/users/login.html -->
 {% extends "base.html" %}
  <!-- Или другой базовый шаблон -->
 {% block content %}
@@ -9,4 +8,5 @@
         <button type="submit">Войти</button>
     </form>
     <p>Нет аккаунта? <a href="{% url 'users:register' %}">Зарегистрироваться</a></p>
+    <p>Забыли пароль? <a href="{% url 'users:password_reset' %}">Сбросить пароль</a></p>  <!-- Добавляем эту строку -->
 {% endblock %}

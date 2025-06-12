@@ -378,3 +378,77 @@ body {
     display: flex;      /* Добавлено для выравнивания высоты карточек */
 }
 
+/* static/css/styles.css */
+.animate-delay-01 { animation-delay: 0.1s; }
+.animate-delay-03 { animation-delay: 0.3s; }
+.animate-delay-05 { animation-delay: 0.5s; }
+.animate-delay-07 { animation-delay: 0.7s; }
+.animate-delay-09 { animation-delay: 0.9s; }
+
+
+/* Общие стили для карточки регистрации */
+.registration-card {
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: none;
+    background-color: #fff;
+    padding: 20px;  /* Добавим внутренний отступ */
+}
+
+/* Стили для заголовка */
+.registration-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 1rem 1.5rem;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+/* Стили для кнопки */
+.registration-button {
+    background-color: #28a745; /* Более яркий цвет кнопки */
+    border-color: #28a745;
+    color: white;
+    transition: background-color 0.3s ease;
+    border-radius: 5px;
+    padding: 0.75rem 1.5rem; /* Увеличим размер кнопки */
+    font-size: 1.1rem; /* Сделаем шрифт немного больше */
+    font-weight: bold; /* Сделаем шрифт жирным */
+}
+
+.registration-button:hover {
+    background-color: #218838; /* Более темный цвет при наведении */
+    border-color: #218838;
+}
+
+/* Стили для input полей */
+.form-control {
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+    padding: 0.75rem 1rem; /* Увеличим размер полей ввода */
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Стили для сообщений об ошибках */
+.invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Стили для help text */
+.form-text {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/*body {*/
+/*    background-color: #f0f2f5;*/
+/*}*/

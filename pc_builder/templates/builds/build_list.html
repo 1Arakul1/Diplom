@@ -4,44 +4,44 @@
 
 {% block content %}
     <h2>Список сборок</h2>
-    <a href="{% url 'builds:build_create' %}" class="btn btn-primary mb-3">Создать новую сборку</a>  <!-- Кнопка создания -->
+    <a href="{% url 'builds:build_create' %}" class="btn btn-primary mb-3">Создать новую сборку</a>
 
     <div class="row">
         {% for build in builds %}
             <div class="col-md-4">
                 <div class="card mb-4 build-card">
-                    {% if build.case.image %}
-                        <img src="{{ build.case.image.url }}" class="card-img-top" alt="{{ build.case.model }}" style="object-fit: contain;">
+                    {% if build.case and build.case.image %}
+                        <img src="{{ build.case.image.url }}" class="card-img-top" alt="{{ build.case.model }}" style="object-fit: contain; max-height: 200px;">
                     {% else %}
-                        <img src="{{ build.case.image.url }}" class="card-img-top" alt="No Image" style="object-fit: contain;">
+                        <img src="{{ build.case.image.url }}" class="card-img-top" alt="No Image" style="object-fit: contain; max-height: 200px;">
                     {% endif %}
                     <div class="card-body">
                         <h5 class="card-title">Сборка {{ build.pk }}</h5>
                         <p class="card-text">
-                            <strong>Процессор:</strong> {{ build.cpu.manufacturer }} {{ build.cpu.model }}<br>
-                            <!-- Добавьте другие компоненты, которые хотите отобразить -->
+                            <strong>Процессор:</strong> {% if build.cpu %}{{ build.cpu.manufacturer }} {{ build.cpu.model }}{% else %}Не указан{% endif %}<br>
+                            <strong>Общая стоимость:</strong> {{ build.get_total_price }}
                         </p>
                         <a href="{% url 'builds:build_detail' build.pk %}" class="btn btn-primary btn-sm">Подробнее</a>
-                                        <form method="post" action="{% url 'builds:add_to_cart' %}" class="add-to-cart-form" data-case-id="{{ case.pk }}">
-                    {% csrf_token %}
-                    <input type="hidden" name="component_type" value="case">
-                    <input type="hidden" name="component_id" value="{{ case.pk }}">
-                    <div class="form-group mb-2">
-                        <label for="quantity-{{ case.pk }}">Количество:</label>
-                        <input type="number" class="form-control" id="quantity-{{ case.pk }}" name="quantity" value="1" min="1">
-                    </div>
-                    <button type="submit" class="btn btn-success w-100">Добавить в корзину</button>
-                </form>
-                <div class="added-message text-success mt-2" id="added-message-{{ case.pk }}" style="display: none; font-weight: 600;">
-                    Товар в корзине
-                </div> <!-- Ссылка на детализацию -->
+
+                        <form method="post" action="{% url 'builds:add_to_cart' %}" class="add-to-cart-form" data-build-id="{{ build.pk }}">
+                            {% csrf_token %}
+                            <input type="hidden" name="component_type" value="build">
+                            <input type="hidden" name="component_id" value="{{ build.pk }}">
+                            <div class="form-group mb-2">
+                                <label for="quantity-{{ build.pk }}">Количество:</label>
+                                <input type="number" class="form-control" id="quantity-{{ build.pk }}" name="quantity" value="1" min="1">
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">Добавить в корзину</button>
+                        </form>
+                        <div class="added-message text-success mt-2" id="added-message-{{ build.pk }}" style="display: none; font-weight: 600;">
+                            Товар в корзине
+                        </div>
                     </div>
                 </div>
             </div>
         {% endfor %}
     </div>
 
-    <!-- Пагинация -->
     {% if builds.has_other_pages %}
         <nav aria-label="Page navigation">
             <ul class="pagination justify-content-center">

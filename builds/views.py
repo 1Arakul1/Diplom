@@ -1,3 +1,6 @@
+#builds\views.py
+from django.conf import settings
+from django.core.mail import send_mail
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Build, CartItem
@@ -12,6 +15,9 @@ from django.shortcuts import redirect
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
+from django.urls import reverse 
+from django.utils import timezone
+from .models import Order, OrderItem 
 
 
 # --- Вспомогательная функция для получения cart_items и total_price (переиспользуемая) ---
@@ -47,7 +53,6 @@ def add_to_cart(request):
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse(error_response, status=400)
         else:
-            # Для обычного запроса можно перенаправить с сообщением или показать ошибку
             return redirect('builds:cart')
 
     try:
@@ -59,46 +64,65 @@ def add_to_cart(request):
 
     component_id = int(component_id)
 
-    component_models = {
-        'cpu': CPU,
-        'gpu': GPU,
-        'motherboard': Motherboard,
-        'ram': RAM,
-        'storage': Storage,
-        'psu': PSU,
-        'case': Case,
-        'cooler': Cooler,
-    }
+    # --- Изменения здесь ---
+    if component_type == 'build':
+        try:
+            component = Build.objects.get(pk=component_id)
+        except Build.DoesNotExist:
+            error_response = {'success': False, 'error': 'Сборка не найдена'}
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse(error_response, status=404)
+            else:
+                return redirect('builds:cart')
 
-    component_model = component_models.get(component_type)
-    if not component_model:
-        error_response = {'success': False, 'error': 'Неверный тип товара'}
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse(error_response, status=400)
-        else:
-            return redirect('builds:cart')
+        cart_item, created = CartItem.objects.get_or_create(
+            user=request.user,
+            build=component, #  Связываем CartItem со сборкой
+        )
 
-    try:
-        component = component_model.objects.get(pk=component_id)
-    except component_model.DoesNotExist:
-        error_response = {'success': False, 'error': 'Товар не найден'}
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse(error_response, status=404)
-        else:
-            return redirect('builds:cart')
+        # --- Конец изменений ---
 
-    # Добавление в корзину (пример)
-    cart_item, created = CartItem.objects.get_or_create(
-        user=request.user,
-        cpu=component if component_type == 'cpu' else None,
-        gpu=component if component_type == 'gpu' else None,
-        motherboard=component if component_type == 'motherboard' else None,
-        ram=component if component_type == 'ram' else None,
-        storage=component if component_type == 'storage' else None,
-        psu=component if component_type == 'psu' else None,
-        case=component if component_type == 'case' else None,
-        cooler=component if component_type == 'cooler' else None,
-    )
+    else: # Если это не сборка, обрабатываем как раньше (отдельные компоненты)
+        component_models = {
+            'cpu': CPU,
+            'gpu': GPU,
+            'motherboard': Motherboard,
+            'ram': RAM,
+            'storage': Storage,
+            'psu': PSU,
+            'case': Case,
+            'cooler': Cooler,
+        }
+
+        component_model = component_models.get(component_type)
+        if not component_model:
+            error_response = {'success': False, 'error': 'Неверный тип товара'}
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse(error_response, status=400)
+            else:
+                return redirect('builds:cart')
+
+        try:
+            component = component_model.objects.get(pk=component_id)
+        except component_model.DoesNotExist:
+            error_response = {'success': False, 'error': 'Товар не найден'}
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse(error_response, status=404)
+            else:
+                return redirect('builds:cart')
+
+        cart_item, created = CartItem.objects.get_or_create(
+            user=request.user,
+            cpu=component if component_type == 'cpu' else None,
+            gpu=component if component_type == 'gpu' else None,
+            motherboard=component if component_type == 'motherboard' else None,
+            ram=component if component_type == 'ram' else None,
+            storage=component if component_type == 'storage' else None,
+            psu=component if component_type == 'psu' else None,
+            case=component if component_type == 'case' else None,
+            cooler=component if component_type == 'cooler' else None,
+        )
+
     if not created:
         cart_item.quantity += quantity
     else:
@@ -109,7 +133,6 @@ def add_to_cart(request):
         return JsonResponse({'success': True})
     else:
         return redirect('builds:cart')
-
 
 @login_required
 def remove_from_cart(request, item_id):
@@ -396,14 +419,73 @@ def build_edit(request, pk):
 
 @login_required
 def checkout(request):
-    """Оформление заказа."""
-    # Здесь будет логика оформления заказа.
-    #  Например:
-    #  1. Получить товары из корзины.
-    #  2. Рассчитать общую стоимость.
-    #  3. Создать заказ в базе данных.
-    #  4. Обработать оплату (если необходимо).
-    #  5. Очистить корзину.
-    #  6. Перенаправить пользователя на страницу подтверждения заказа.
+    cart_items = CartItem.objects.filter(user=request.user)
+    total_price = sum(item.get_total_price() for item in cart_items)
 
-    return render(request, 'builds/checkout.html', {})  # Замените на ваш шаблон
+    if request.method == 'POST':
+        # Обработка данных формы оформления заказа
+        email = request.POST.get('email')
+        delivery_option = request.POST.get('delivery_option')
+        payment_method = request.POST.get('payment_method')
+        address = request.POST.get('address')
+
+        # Валидация данных (здесь можно добавить более сложную валидацию)
+        if not email or not delivery_option or not payment_method:
+            messages.error(request, "Пожалуйста, заполните все поля.")
+            return render(request, 'builds/checkout.html', {'cart_items': cart_items, 'total_price': total_price})
+
+        # Создание заказа
+        order = Order.objects.create(
+            user=request.user,
+            email=email,
+            delivery_option=delivery_option,
+            payment_method=payment_method,
+            address=address,
+            total_amount=total_price,
+            order_date=timezone.now()
+        )
+        #order.save() # Не нужно, т.к. используем Order.objects.create()
+
+        # Создание позиций заказа
+        for item in cart_items:
+            OrderItem.objects.create(
+                order=order,
+                item=str(item),  # Преобразуем товар в строку
+                quantity=item.quantity,
+                price=item.get_total_price() / item.quantity
+            )
+
+        # Очистка корзины после оформления заказа
+        cart_items.delete()
+
+        # Отправка уведомления по электронной почте
+        subject = 'Ваш заказ оформлен!'
+        message = f'Спасибо за ваш заказ! \n\nСумма заказа: {total_price} ₽\nСпособ доставки: {delivery_option}\nСпособ оплаты: {payment_method}\nАдрес доставки: {address}\nВаш трек-номер: {order.track_number}'
+        from_email = settings.EMAIL_HOST_USER
+        recipient_list = [email]
+
+        try:
+            send_mail(subject, message, from_email, recipient_list)
+            success = True
+        except Exception as e:
+            messages.error(request, f"Заказ оформлен, но не удалось отправить уведомление: {e}")
+            success = False
+
+        # Перенаправление на страницу подтверждения с параметром в URL
+        if success:
+            return redirect(reverse('builds:order_confirmation') + f'?success=True&track_number={order.track_number}')
+        else:
+            return redirect(reverse('builds:order_confirmation') + '?success=False')
+
+    return render(request, 'builds/checkout.html', {'cart_items': cart_items, 'total_price': total_price})
+
+@login_required
+def order_confirmation(request):
+    success = request.GET.get('success')
+    track_number = request.GET.get('track_number')
+    if success == 'True':
+        messages.success(request, f"Заказ успешно оформлен! Проверьте вашу электронную почту. Ваш трек-номер: {track_number}")
+    elif success == 'False':
+        messages.error(request, "Заказ оформлен, но не удалось отправить уведомление.")
+
+    return render(request, 'builds/order_confirmation.html', {'track_number': track_number})

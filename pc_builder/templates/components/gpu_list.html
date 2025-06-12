@@ -3,9 +3,9 @@
 {% load static %}
 
 {% block content %}
-<h2>Список видеокарт</h2>
+<h2 class="animate__animated animate__fadeIn">Список процессоров</h2>
 
-<form method="get" class="mb-4">
+<form method="get" class="mb-4 animate__animated animate__fadeIn">
     <div class="input-group">
         <input type="text" class="form-control" placeholder="Поиск видеокарты..." name="q" value="{{ query|default:'' }}">
         <button class="btn btn-outline-secondary" type="submit">Поиск</button>
@@ -14,7 +14,7 @@
 
 <div class="row row-cols-1 row-cols-md-3 g-4">
     {% for gpu in gpus %}
-    <div class="col">
+    <div class="col animate__animated animate__fadeIn">
         <div class="card h-100 gpu-card">
             {% if gpu.image %}
                 <img src="{{ gpu.image.url }}" class="card-img-top gpu-image" alt="{{ gpu.model }}">
