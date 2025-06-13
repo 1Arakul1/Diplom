@@ -5,7 +5,7 @@
     <div class="container mt-5">
         <a href="{% url 'builds:employee_order_history' %}" class="btn btn-secondary">История заказов</a>
         <h2>Список заказов</h2>
-        <form method="GET" class="mb-3">  <!-- Добавляем форму поиска -->
+        <form method="GET" class="mb-3">
             <div class="input-group">
                 <input type="text" class="form-control" placeholder="Поиск по номеру заказа, имени пользователя или email" name="q" value="{{ query }}">
                 <button class="btn btn-outline-secondary" type="submit">Поиск</button>
@@ -20,7 +20,7 @@
                     <th>Дата заказа</th>
                     <th>Статус</th>
                     <th>Действия</th>
-                    <th>Трек-номер</th>  <!-- Добавляем столбец для трек-номера -->
+                    <th>Трек-номер</th>
                 </tr>
             </thead>
             <tbody>
@@ -35,7 +35,7 @@
                             <a href="{% url 'builds:employee_order_update' order.pk %}" class="btn btn-sm btn-primary">Изменить статус</a>
                             <a href="{% url 'builds:employee_order_complete' order.pk %}" class="btn btn-sm btn-success">Заказ выдан</a>
                         </td>
-                        <td>{{ order.track_number }}</td>  <!-- Отображаем трек-номер для каждого заказа -->
+                        <td>{{ order.track_number }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -46,7 +46,7 @@
             <ul class="pagination justify-content-center">
                 {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">Предыдущая</a>
+                        <a class="page-link" href="{% if query %}?q={{ query }}&{% else %}?{% endif %}page={{ page_obj.previous_page_number }}">Предыдущая</a>
                     </li>
                 {% else %}
                     <li class="page-item disabled">
@@ -61,14 +61,14 @@
                         </li>
                     {% else %}
                         <li class="page-item">
-                            <a class="page-link" href="?q={{ query }}&page={{ num }}">{{ num }}</a>
+                            <a class="page-link" href="{% if query %}?q={{ query }}&{% else %}?{% endif %}page={{ num }}">{{ num }}</a>
                         </li>
                     {% endif %}
                 {% endfor %}
 
                 {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Следующая</a>
+                        <a class="page-link" href="{% if query %}?q={{ query }}&{% else %}?{% endif %}page={{ page_obj.next_page_number }}">Следующая</a>
                     </li>
                 {% else %}
                     <li class="page-item disabled">

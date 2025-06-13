@@ -2,7 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from components.models import CPU, GPU, Motherboard, RAM, Storage, PSU, Case, Cooler
 from django.contrib import admin
-import uuid  # Импортируем модуль uuid
+import uuid
+from django.utils import timezone
 
 class Build(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Пользователь")
@@ -47,7 +48,7 @@ class Build(models.Model):
 class CartItem(models.Model):
     """Элемент в корзине."""
     build = models.ForeignKey(Build, null=True, blank=True, on_delete=models.CASCADE)
-    item_type = models.CharField(max_length=50)  # например
+    item_type = models.CharField(max_length=50)
     quantity = models.PositiveIntegerField(default=1)
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Пользователь")
     cpu = models.ForeignKey(CPU, on_delete=models.CASCADE, verbose_name="Процессор", blank=True, null=True)
@@ -114,17 +115,36 @@ class Order(models.Model):
         ('pending', 'Заказ на рассмотрении'),
         ('confirmed', 'Заказ подтверждён'),
         ('assembling', 'Заказ собирается'),
+        ('delivery_prep', 'Заказ готовится к доставке'),
+        ('delivering', 'Заказ будет доставлен вам в течении 3 часов'),
         ('delivered', 'Заказ доставлен, заберите его'),
+        ('completed', 'Заказ выполнен')
+    ]
+
+    DELIVERY_OPTIONS = [
+        ('pickup', 'Самовывоз из магазина'),
+        ('courier', 'Доставка курьером'),
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Пользователь")
     email = models.EmailField(verbose_name="Email")
-    delivery_option = models.CharField(max_length=50, verbose_name="Способ доставки")
+    delivery_option = models.CharField(
+        max_length=50,
+        verbose_name="Способ доставки",
+        choices=DELIVERY_OPTIONS,
+    )
     payment_method = models.CharField(max_length=50, verbose_name="Способ оплаты")
     address = models.CharField(max_length=255, verbose_name="Адрес доставки", blank=True, null=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Общая сумма")
     order_date = models.DateTimeField(verbose_name="Дата заказа")
-    track_number = models.CharField(max_length=8, unique=True, blank=True, null=True, verbose_name="Трек-номер")
+    track_number = models.CharField(
+        max_length=8,
+        unique=True,
+        blank=True,
+        null=True,
+        verbose_name="Трек-номер",
+        db_index=True
+    )
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,

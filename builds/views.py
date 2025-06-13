@@ -1,27 +1,41 @@
-#builds\views.py
+# Стандартные библиотеки Python
+from decimal import Decimal
+
+# Django: общие утилиты
 from django.conf import settings
-from django.core.mail import send_mail
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from .models import Build, CartItem
-from components.models import CPU, GPU, Motherboard, RAM, Storage, PSU, Case, Cooler  # Импорт Cooler
-from .forms import AddToCartForm  # Импортируем форму
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.contrib import messages  # Import messages
-from django.http import JsonResponse  # Импортируем JsonResponse
-from django.core.exceptions import ValidationError  # Импортируем ValidationError
-from decimal import Decimal  # Добавляем import Decimal
-from django.shortcuts import redirect
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
-from django.urls import reverse 
+from django.urls import reverse
 from django.utils import timezone
-from .models import Order, OrderItem
-from .forms import OrderUpdateForm
+from django.http import JsonResponse
+from django.core.mail import send_mail
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger, EmptyPage
+from django.core.exceptions import ValidationError
+from django.views.decorators.http import require_POST
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.db.models import Q, F
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db.models import Q  # Import Q
-from django.contrib.admin.views.decorators import staff_member_required 
+
+
+# Django: декораторы
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.admin.views.decorators import staff_member_required
+
+# Django ORM
+from django.db.models import Q
+
+# Модели из текущего приложения
+from .models import Build, CartItem, Order, OrderItem
+
+# Модели из другого приложения
+from components.models import CPU, GPU, Motherboard, RAM, Storage, PSU, Case, Cooler
+
+# Формы из текущего приложения
+from .forms import AddToCartForm, OrderUpdateForm
+
+# Django сообщения
+from django.contrib import messages
+
 
 
 
@@ -424,22 +438,31 @@ def build_edit(request, pk):
 
 # Функция для проверки, является ли пользователь сотрудником
 def is_employee(user):
-    return user.is_staff
+    return user.is_staff  # Проверка, является ли пользователь сотрудником (is_staff)
+
+# Форма
+class CustomOrderUpdateForm(OrderUpdateForm):
+    def __init__(self, *args, **kwargs):
+        status_choices = kwargs.pop('status_choices', [])
+        super().__init__(*args, **kwargs)
+        self.fields['status'].choices = status_choices  # Задаём в конструкторе
+
 
 # Представление для сотрудников для просмотра и изменения заказов
 @login_required
 @user_passes_test(is_employee)
 def employee_order_list(request):
     query = request.GET.get('q')
-    orders = Order.objects.filter(is_completed=False) # Начинаем с незавершенных заказов
-
     if query:
-        orders = orders.filter(
-            Q(track_number__icontains=query) |
-            Q(user__username__icontains=query) |
-            Q(email__icontains=query)
-        )
-    orders = orders.order_by('-order_date')
+        orders = Order.objects.filter(
+            Q(is_completed=False) & (
+                Q(track_number__icontains=query) |
+                Q(user__username__icontains=query) |
+                Q(email__icontains=query)
+            )
+        ).order_by('-order_date')
+    else:
+        orders = Order.objects.filter(is_completed=False).order_by('-order_date')
 
     # Пагинация
     paginator = Paginator(orders, 10)  # По 10 заказов на страницу
@@ -447,51 +470,74 @@ def employee_order_list(request):
     try:
         page_obj = paginator.get_page(page_number)
     except PageNotAnInteger:
-        page_obj = paginator.get_page(1)
+        page_obj = paginator.page(1)
     except EmptyPage:
-        page_obj = paginator.get_page(paginator.num_pages)
+        page_obj = paginator.page(paginator.num_pages)
 
     return render(request, 'builds/employee_order_list.html', {'page_obj': page_obj, 'query': query})
+
+
 
 # Представление для обновления статуса заказа
 @login_required
 @user_passes_test(is_employee)
 def employee_order_update(request, order_id):
     order = get_object_or_404(Order, pk=order_id)
+
+    # Определение доступных статусов на основе доставки
+    if order.delivery_option == 'courier':  # Должно быть 'courier'
+        status_choices = [
+            ('pending', 'Заказ на рассмотрении'),
+            ('confirmed', 'Заказ подтверждён'),
+            ('assembling', 'Заказ собирается'),
+            ('delivery_prep', 'Заказ готовится к доставке'),
+            ('delivering', 'Заказ будет доставлен вам в течении 3 часов'),
+            ('completed', 'Заказ выполнен'),
+        ]
+    else:  # Самовывоз или другой способ доставки
+        status_choices = [
+            ('pending', 'Заказ на рассмотрении'),
+            ('confirmed', 'Заказ подтверждён'),
+            ('delivered', 'Заказ доставлен, заберите его'),
+            ('completed', 'Заказ выполнен'),
+        ]
+
     if request.method == 'POST':
-        form = OrderUpdateForm(request.POST, instance=order)
+        form = CustomOrderUpdateForm(request.POST, instance=order, status_choices=status_choices)
         if form.is_valid():
             form.save()
             messages.success(request, f"Статус заказа #{order.pk} успешно изменен.")
             return redirect('builds:employee_order_list')
     else:
-        form = OrderUpdateForm(instance=order)
+        form = CustomOrderUpdateForm(instance=order, status_choices=status_choices)
     return render(request, 'builds/employee_order_update.html', {'form': form, 'order': order})
+
 
 @login_required
 @user_passes_test(is_employee)
 def employee_order_complete(request, order_id):
     order = get_object_or_404(Order, pk=order_id)
     order.is_completed = True
-    order.status = 'delivered'  # Задаем статус "Заказ доставлен, заберите его"
+    order.status = 'completed'  # Задаем статус "Заказ выполнен"
     order.save()
     messages.success(request, f"Заказ #{order.pk} отмечен как выданный.")
     return redirect('builds:employee_order_list')
+
 
 @login_required
 @user_passes_test(is_employee)
 def employee_order_history(request):
     query = request.GET.get('q')
-    orders = Order.objects.filter(is_completed=True) # Начинаем с завершенных заказов
-
     if query:
-        orders = orders.filter(
-            Q(track_number__icontains=query) |
-            Q(user__username__icontains=query) |
-            Q(email__icontains=query)
-        )
-
-    orders = orders.order_by('-order_date')
+        orders = Order.objects.filter(
+            Q(is_completed=True) & (
+                Q(track_number__icontains=query) |
+                Q(user__username__icontains=query) |
+                Q(email__icontains=query)
+            )
+        ).order_by('-order_date')
+    else:
+        orders = Order.objects.filter(is_completed=True).order_by('-order_date')
 
     # Пагинация
     paginator = Paginator(orders, 10)  # По 10 заказов на страницу
@@ -499,11 +545,12 @@ def employee_order_history(request):
     try:
         page_obj = paginator.get_page(page_number)
     except PageNotAnInteger:
-        page_obj = paginator.get_page(1)
+        page_obj = paginator.page(1)
     except EmptyPage:
-        page_obj = paginator.get_page(paginator.num_pages)
+        page_obj = paginator.page(paginator.num_pages)
 
-    return render(request, 'builds/employee_order_history.html', {'page_obj': page_obj, 'query': query}) # Передаем query
+    return render(request, 'builds/employee_order_history.html', {'page_obj': page_obj, 'query': query})
+
 
 @login_required
 def checkout(request):
@@ -532,14 +579,15 @@ def checkout(request):
             total_amount=total_price,
             order_date=timezone.now()
         )
+        # order.save() # Не нужно, т.к. используем Order.objects.create()
 
         # Создание позиций заказа
         for item in cart_items:
             OrderItem.objects.create(
                 order=order,
-                item=str(item),  # Преобразуем товар в строку (потенциально нужно настроить строковое представление)
+                item=str(item),  # Преобразуем товар в строку
                 quantity=item.quantity,
-                price=item.get_total_price() / item.quantity  # Цена за единицу
+                price=item.get_total_price() / item.quantity
             )
 
         # Очистка корзины после оформления заказа
@@ -547,7 +595,7 @@ def checkout(request):
 
         # Отправка уведомления по электронной почте
         subject = 'Ваш заказ оформлен!'
-        message = f'Спасибо за ваш заказ! \n\nСумма заказа: {total_price} ₽\nСпособ доставки: {delivery_option}\nСпособ оплаты: {payment_method}\nАдрес доставки: {address}\nВаш трек-номер: {order.track_number}'
+        message = f'Спасибо за ваш заказ! \n\nСумма заказа: {total_price} ₽\nСпособ доставки: {order.delivery_option}\nСпособ оплаты: {order.payment_method}\nАдрес доставки: {order.address}\nВаш трек-номер: {order.track_number}'
         from_email = settings.EMAIL_HOST_USER
         recipient_list = [email]
 
@@ -566,11 +614,11 @@ def checkout(request):
 
     return render(request, 'builds/checkout.html', {'cart_items': cart_items, 'total_price': total_price})
 
+
 @login_required
 def order_confirmation(request):
     success = request.GET.get('success')
     track_number = request.GET.get('track_number')
-
     if success == 'True':
         messages.success(request, f"Заказ успешно оформлен! Проверьте вашу электронную почту. Ваш трек-номер: {track_number}")
     elif success == 'False':
@@ -578,10 +626,15 @@ def order_confirmation(request):
 
     return render(request, 'builds/order_confirmation.html', {'track_number': track_number})
 
+
 @login_required
 def my_orders(request):
     orders = Order.objects.filter(user=request.user, is_completed=False).order_by('-order_date')  # Показывать только невыданные заказы
     return render(request, 'builds/my_orders.html', {'orders': orders})
+
+
+def is_employee(user):
+    return user.is_staff
 
 
 def index(request):
@@ -603,8 +656,8 @@ def index(request):
 
     if request.user.is_authenticated:
         if is_employee(request.user):
-            return render(request, 'builds/employee_index.html', context)
+            return render(request, 'pc_builder/employee_index.html', context)
         else:
-            return render(request, 'builds/index.html', context)
+            return render(request, 'pc_builder/index.html', context)
     else:
-        return render(request, 'builds/index.html', context)
+        return render(request, 'pc_builder/index.html', context)

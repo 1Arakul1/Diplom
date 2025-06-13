@@ -1,6 +1,5 @@
 # builds/forms.py
 from django import forms
-from django import forms
 from .models import Order
 
 class OrderUpdateForm(forms.ModelForm):
