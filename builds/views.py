@@ -62,7 +62,11 @@ def cart_view(request):
             cart_items = CartItem.objects.filter(user=request.user)
             total_price = sum(item.get_total_price() for item in cart_items)
             context = {'cart_items': cart_items, 'total_price': total_price}
-            return render(request, 'builds/cart.html', context)
+            response = render(request, 'builds/cart.html', context)  # Сохраняем response
+            response['Cache-Control'] = 'private, no-cache, no-store, must-revalidate'  # Добавляем заголовки
+            response['Pragma'] = 'no-cache'
+            response['Expires'] = '0'
+            return response # Возвращаем response
     except Session.DoesNotExist:
         context = {'cart_items': [], 'total_price': 0}
         return render(request, 'builds/cart.html', context)
@@ -70,7 +74,6 @@ def cart_view(request):
 
 @login_required
 @require_POST
-@cache_page(60 * 15) 
 def add_to_cart(request):
     with transaction.atomic():
         logger.info(f"User in add_to_cart: {request.user}")
@@ -176,6 +179,18 @@ def add_to_cart(request):
             return JsonResponse({'success': True})
         else:
             return redirect('builds:cart')
+
+
+@login_required
+def remove_from_cart(request, item_id):
+    """Удаление товара из корзины."""
+    try:
+        cart_item = get_object_or_404(CartItem, pk=item_id, user=request.user)
+        cart_item.delete()
+        messages.success(request, "Товар успешно удален из корзины.")
+    except Http404:
+        messages.error(request, "Товар не найден в корзине.")
+    return redirect('builds:cart')
 
 
 @login_required

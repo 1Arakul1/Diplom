@@ -293,14 +293,12 @@ if __name__ == "__main__":
 
 
 CACHE_MIDDLEWARE_IGNORE_PATHS = [
-    '/builds/stock/'
     '/builds/cart/',           # Страница корзины
     '/builds/add_to_cart/',      # Добавление в корзину
     '/builds/remove_from_cart/', # Удаление из корзины
     '/users/login/',            # Страница логина
     '/users/logout/',           # Страница выхода
-    '/users/register/',
-    '/components/stock_list/',
-    '/builds/create/'         # Страница регистрации
+    '/users/register/',         # Страница регистрации
+    '/components/stock_list/',  # Добавьте это!  Убедитесь, что URL правильный
     # ... другие URL-адреса, связанные с пользователем ...
 ]
