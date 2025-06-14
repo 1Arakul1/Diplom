@@ -1,6 +1,7 @@
-# Стандартные библиотеки Python
+# builds/views.py
 from decimal import Decimal
-
+from django.shortcuts import render
+from django.views.decorators.cache import cache_page
 # Django: общие утилиты
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
@@ -638,18 +639,15 @@ def is_employee(user):
 
 
 def index(request):
-    # Пагинация для главной страницы
-    cpu_list = CPU.objects.all()
-    paginator = Paginator(cpu_list, 6)  # Показывать по 6 CPU на странице
+    cpu_list = CPU.objects.all().select_related()
+    paginator = Paginator(cpu_list, 6)
 
     page = request.GET.get('page')
     try:
         cpus = paginator.page(page)
     except PageNotAnInteger:
-        # Если страница не является целым числом, возвращаем первую страницу.
         cpus = paginator.page(1)
     except EmptyPage:
-        # Если страница больше максимальной, возвращаем последнюю страницу.
         cpus = paginator.page(paginator.num_pages)
 
     context = {'cpus': cpus}

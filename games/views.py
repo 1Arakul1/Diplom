@@ -4,6 +4,7 @@ from django.shortcuts import render, get_object_or_404
 from .models import Game
 from components.models import CPU, GPU
 from fps_data.models import FPSData
+from django.core.cache import cache
 
 def game_list(request):
     games = Game.objects.all()

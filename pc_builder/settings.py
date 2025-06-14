@@ -35,7 +35,7 @@ load_dotenv()
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', '')
 DEBUG = True
   # В production должно быть False
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.1.2', '188.225.3.178']  # Замени на свой IP
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.1.2', '178.206.251.227']  # Замени на свой IP
 
 # Application definition
 # settings.py
@@ -52,18 +52,22 @@ INSTALLED_APPS = [
     'builds',
     'users',
     'fps_data',
+    'debug_toolbar',
     
 ]
 
 MIDDLEWARE = [
+    'django.middleware.cache.UpdateCacheMiddleware', # ДОЛЖЕН БЫТЬ ПЕРВЫМ
     'django.middleware.security.SecurityMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.locale.LocaleMiddleware',  # <-- Важно!
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
+    'django.middleware.cache.FetchFromCacheMiddleware',  # ДОЛЖЕН БЫТЬ ПОСЛЕДНИМ
 ]
 
 # settings.py
@@ -132,6 +136,12 @@ LANGUAGE_CODE = 'ru-RU'  # Или 'ru'
 USE_I18N = True
 USE_L10N = True # Рекомендуется True для локализации
 TIME_ZONE = 'Europe/Moscow'  # Ваш часовой пояс  # Или ваш часовой пояс, например 'Europe/Moscow'
+
+INTERNAL_IPS = [
+    "127.0.0.1",
+    # "192.168.1.1",  # Замените на свой IP-адрес или используйте '*'
+]
+INTERNAL_IPS = ["*"]
 
 
 # Static files (CSS, JavaScript, Images)
@@ -208,10 +218,10 @@ LOGGING = {
     },
 }
 # Настройки кэширования (дополнительно)
-CACHE_ENABLED = os.getenv("CACHE_ENABLED", "True").lower() == "true"  # Читаем из .env
+CACHE_ENABLED = True  # Читаем из .env
 CACHE_MIDDLEWARE_ALIAS = "default"  # Используем кэш по умолчанию
-CACHE_MIDDLEWARE_SECONDS = 600  # 10 минут (время жизни кэша)
-CACHE_MIDDLEWARE_KEY_PREFIX = ""  # Префикс для ключей кэшаючей кэша
+CACHE_MIDDLEWARE_SECONDS = 60 * 15  # Кэшировать на 15 минут (в секундах)
+CACHE_MIDDLEWARE_KEY_PREFIX = ""  # Префикс для ключей кэша # Префикс для ключей кэшаючей кэша
 
 #!/usr/bin/env python
 """

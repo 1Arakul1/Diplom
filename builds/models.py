@@ -1,3 +1,4 @@
+#builds\models.py
 from django.db import models
 from django.contrib.auth.models import User
 from components.models import CPU, GPU, Motherboard, RAM, Storage, PSU, Case, Cooler

@@ -5,6 +5,7 @@ from .models import CPU, GPU, Motherboard, RAM, Storage, PSU, Case, Manufacturer
 from django.db.models import Q
 from django import forms
 from .models import Cooler, CPU, Manufacturer # Импортируйте модель Cooler
+from django.core.cache import cache
 
 
 # --- Forms ---
