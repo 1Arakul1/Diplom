@@ -1,50 +1,47 @@
-# builds/views.py
 from decimal import Decimal
 from django.shortcuts import render
 from django.views.decorators.cache import cache_page
-# Django: общие утилиты
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 from django.http import JsonResponse
 from django.core.mail import send_mail
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger, EmptyPage
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.exceptions import ValidationError
 from django.views.decorators.http import require_POST
-from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q, F
-from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
-
-
-# Django: декораторы
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.admin.views.decorators import staff_member_required
-
-# Django ORM
-from django.db.models import Q
-
-# Модели из текущего приложения
-from .models import Build, CartItem, Order, OrderItem
-
-# Модели из другого приложения
-from components.models import CPU, GPU, Motherboard, RAM, Storage, PSU, Case, Cooler
-
-# Формы из текущего приложения
-from .forms import AddToCartForm, OrderUpdateForm
-
-# Django сообщения
+from django.http import Http404
 from django.contrib import messages
+import logging
+from django.contrib.admin.views.decorators import staff_member_required
+from django.db.models import Q
+from .models import Build, CartItem, Order, OrderItem
+from components.models import CPU, GPU, Motherboard, RAM, Storage, PSU, Case, Cooler
+from .forms import AddToCartForm, OrderUpdateForm
+from django.contrib import messages
+from django.db import transaction  # Import transaction
+from django.contrib.sessions.models import Session
 
+logger = logging.getLogger(__name__)
 
+class VaryCookieMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        response['Vary'] = 'Cookie'
+        logger.info("VaryCookieMiddleware is running!")
+        return response
 
 
 # --- Вспомогательная функция для получения cart_items и total_price (переиспользуемая) ---
 def get_cart_context(request):
     """Получает контекст корзины для авторизованных пользователей."""
     cart_items = []
-    total_price = Decimal('0.0')  # Инициализируем как Decimal
+    total_price = Decimal('0.0')
     if request.user.is_authenticated:
         cart_items = CartItem.objects.filter(user=request.user)
         for item in cart_items:
@@ -55,111 +52,142 @@ def get_cart_context(request):
 @login_required
 def cart_view(request):
     """Просмотр корзины."""
-    cart_items = CartItem.objects.filter(user=request.user)
-    # total_price = sum(item.get_total_price() for item in cart_items) #Убрали, так как считаем в get_cart_context
-    context = {'cart_items': cart_items, 'total_price': get_cart_context(request)['total_price']}
-    return render(request, 'builds/cart.html', context)
+    logger.info(f"User in cart_view: {request.user}")
+    print(f"Cart items in cart_view: {CartItem.objects.filter(user=request.user)}")
+
+    # Получаем текущую сессию, блокируя ее для обновления
+    try:
+        with transaction.atomic():
+            session = Session.objects.select_for_update().get(session_key=request.session.session_key)
+            cart_items = CartItem.objects.filter(user=request.user)
+            total_price = sum(item.get_total_price() for item in cart_items)
+            context = {'cart_items': cart_items, 'total_price': total_price}
+            return render(request, 'builds/cart.html', context)
+    except Session.DoesNotExist:
+        context = {'cart_items': [], 'total_price': 0}
+        return render(request, 'builds/cart.html', context)
 
 
 @login_required
 @require_POST
+@cache_page(60 * 15) 
 def add_to_cart(request):
-    component_type = request.POST.get('component_type')
-    component_id = request.POST.get('component_id')
-    quantity = request.POST.get('quantity', '1')
+    with transaction.atomic():
+        logger.info(f"User in add_to_cart: {request.user}")
+        """Добавляет товар в корзину пользователя."""
+        component_type = request.POST.get('component_type')
+        component_id = request.POST.get('component_id')
+        quantity = request.POST.get('quantity', '1')
 
-    if not component_type or not component_id:
-        error_response = {'success': False, 'error': 'Не указан товар'}
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse(error_response, status=400)
-        else:
-            return redirect('builds:cart')
+        logger.debug(f"Received data: component_type={component_type}, component_id={component_id}, quantity={quantity}")
 
-    try:
-        quantity = int(quantity)
-        if quantity < 1:
-            quantity = 1
-    except ValueError:
-        quantity = 1
-
-    component_id = int(component_id)
-
-    # --- Изменения здесь ---
-    if component_type == 'build':
-        try:
-            component = Build.objects.get(pk=component_id)
-        except Build.DoesNotExist:
-            error_response = {'success': False, 'error': 'Сборка не найдена'}
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse(error_response, status=404)
-            else:
-                return redirect('builds:cart')
-
-        cart_item, created = CartItem.objects.get_or_create(
-            user=request.user,
-            build=component, #  Связываем CartItem со сборкой
-        )
-
-        # --- Конец изменений ---
-
-    else: # Если это не сборка, обрабатываем как раньше (отдельные компоненты)
-        component_models = {
-            'cpu': CPU,
-            'gpu': GPU,
-            'motherboard': Motherboard,
-            'ram': RAM,
-            'storage': Storage,
-            'psu': PSU,
-            'case': Case,
-            'cooler': Cooler,
-        }
-
-        component_model = component_models.get(component_type)
-        if not component_model:
-            error_response = {'success': False, 'error': 'Неверный тип товара'}
+        if not component_type or not component_id:
+            error_response = {'success': False, 'error': 'Не указан тип или ID товара'}
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse(error_response, status=400)
             else:
                 return redirect('builds:cart')
 
         try:
-            component = component_model.objects.get(pk=component_id)
-        except component_model.DoesNotExist:
-            error_response = {'success': False, 'error': 'Товар не найден'}
+            quantity = int(quantity)
+            if quantity < 1:
+                quantity = 1
+            component_id = int(component_id)
+        except ValueError:
+            error_response = {'success': False, 'error': 'Неверное количество'}
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse(error_response, status=404)
+                return JsonResponse(error_response, status=400)
             else:
                 return redirect('builds:cart')
 
-        cart_item, created = CartItem.objects.get_or_create(
-            user=request.user,
-            cpu=component if component_type == 'cpu' else None,
-            gpu=component if component_type == 'gpu' else None,
-            motherboard=component if component_type == 'motherboard' else None,
-            ram=component if component_type == 'ram' else None,
-            storage=component if component_type == 'storage' else None,
-            psu=component if component_type == 'psu' else None,
-            case=component if component_type == 'case' else None,
-            cooler=component if component_type == 'cooler' else None,
-        )
+        component = None
 
-    if not created:
-        cart_item.quantity += quantity
-    else:
-        cart_item.quantity = quantity
-    cart_item.save()
+        if component_type == 'build':
+            try:
+                component = Build.objects.get(pk=component_id)
+                cart_item, created = CartItem.objects.get_or_create(
+                    user=request.user,
+                    build=component,
+                    cpu=None, gpu=None, motherboard=None, ram=None, storage=None, psu=None, case=None, cooler=None
+                )
+            except Build.DoesNotExist:
+                error_response = {'success': False, 'error': 'Сборка не найдена'}
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse(error_response, status=404)
+                else:
+                    return redirect('builds:cart')
 
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        return JsonResponse({'success': True})
-    else:
-        return redirect('builds:cart')
+        else:
+            component_models = {
+                'cpu': CPU,
+                'gpu': GPU,
+                'motherboard': Motherboard,
+                'ram': RAM,
+                'storage': Storage,
+                'psu': PSU,
+                'case': Case,
+                'cooler': Cooler,
+            }
+
+            component_model = component_models.get(component_type)
+
+            if not component_model:
+                error_response = {'success': False, 'error': 'Неверный тип товара'}
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse(error_response, status=400)
+                else:
+                    return redirect('builds:cart')
+
+            try:
+                component = component_model.objects.get(pk=component_id)
+            except component_model.DoesNotExist:
+                error_response = {'success': False, 'error': 'Товар не найден'}
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse(error_response, status=404)
+                else:
+                    return redirect('builds:cart')
+
+            cart_item, created = CartItem.objects.get_or_create(
+                user=request.user,
+                build=None,
+                cpu=component if component_type == 'cpu' else None,
+                gpu=component if component_type == 'gpu' else None,
+                motherboard=component if component_type == 'motherboard' else None,
+                ram=component if component_type == 'ram' else None,
+                storage=component if component_type == 'storage' else None,
+                psu=component if component_type == 'psu' else None,
+                case=component if component_type == 'case' else None,
+                cooler=component if component_type == 'cooler' else None,
+            )
+        logger.debug(f"CartItem created: {created}, ID: {cart_item.id}")
+
+        # Обновляем количество
+        if not created:
+            cart_item.quantity += quantity
+        else:
+            cart_item.quantity = quantity
+
+        cart_item.save()
+
+        print(f"CartItem saved: {cart_item.id}, quantity: {cart_item.quantity}, component_type: {component_type}, component_id: {component_id}")
+        logger.info(f"CartItem saved: ID={cart_item.id}, quantity={cart_item.quantity}")
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        else:
+            return redirect('builds:cart')
+
 
 @login_required
 def remove_from_cart(request, item_id):
     """Удаление товара из корзины."""
-    cart_item = get_object_or_404(CartItem, pk=item_id, user=request.user)
-    cart_item.delete()
-    return redirect('builds:cart')  # Перенаправляем на корзину
+    try:
+        cart_item = get_object_or_404(CartItem, pk=item_id, user=request.user)
+        cart_item.delete()
+        messages.success(request, "Товар успешно удален из корзины.")
+    except Http404:
+        messages.error(request, "Товар не найден в корзине.")
+    return redirect('builds:cart')
 
 # -----------------  Остальной код views.py ----------------------
 def build_list(request):
@@ -388,11 +416,11 @@ def build_edit(request, pk):
             total_price += build.ram.price
         if build.storage:
             total_price += build.storage.price
-        if build.psu:
+        if psu:
             total_price += build.psu.price
-        if build.case:
+        if case:
             total_price += build.case.price
-        if build.cooler:
+        if cooler:
             total_price += build.cooler.price  # Добавляем цену кулера
         build.total_price = total_price
 
@@ -584,11 +612,44 @@ def checkout(request):
 
         # Создание позиций заказа
         for item in cart_items:
+            component_type = None
+            component_id = None
+
+            if item.build:
+                component_type = 'build'
+                component_id = item.build.pk
+            elif item.cpu:
+                component_type = 'cpu'
+                component_id = item.cpu.pk
+            elif item.gpu:
+                component_type = 'gpu'
+                component_id = item.gpu.pk
+            elif item.motherboard:
+                component_type = 'motherboard'
+                component_id = item.motherboard.pk
+            elif item.ram:
+                component_type = 'ram'
+                component_id = item.ram.pk
+            elif item.storage:
+                component_type = 'storage'
+                component_id = item.storage.pk
+            elif item.psu:
+                component_type = 'psu'
+                component_id = item.psu.pk
+            elif item.case:
+                component_type = 'case'
+                component_id = item.case.pk
+            elif item.cooler:
+                component_type = 'cooler'
+                component_id = item.cooler.pk
+
             OrderItem.objects.create(
                 order=order,
                 item=str(item),  # Преобразуем товар в строку
                 quantity=item.quantity,
-                price=item.get_total_price() / item.quantity
+                price=item.get_total_price() / item.quantity,
+                component_type=component_type,
+                component_id=component_id,
             )
 
         # Очистка корзины после оформления заказа
@@ -614,7 +675,6 @@ def checkout(request):
             return redirect(reverse('builds:order_confirmation') + '?success=False')
 
     return render(request, 'builds/checkout.html', {'cart_items': cart_items, 'total_price': total_price})
-
 
 @login_required
 def order_confirmation(request):
@@ -659,3 +719,57 @@ def index(request):
             return render(request, 'pc_builder/index.html', context)
     else:
         return render(request, 'pc_builder/index.html', context)
+    
+
+def get_compatible_motherboards(request):
+    """
+    Возвращает JSON с материнскими платами, совместимыми с выбранным CPU.
+    """
+    cpu_id = request.GET.get('cpu_id')
+    if cpu_id:
+        try:
+            cpu = CPU.objects.get(pk=cpu_id)
+            # Получаем материнские платы с тем же сокетом, что и у CPU
+            compatible_motherboards = Motherboard.objects.filter(socket=cpu.socket).values('id', 'name') # .values() для оптимизации
+            return JsonResponse(list(compatible_motherboards), safe=False) # Преобразуем QuerySet в список
+        except CPU.DoesNotExist:
+            return JsonResponse({'error': 'CPU не найден'}, status=404)
+    else:
+        return JsonResponse({'error': 'Не указан CPU ID'}, status=400)
+
+
+def get_compatible_rams(request):
+    """
+    Возвращает JSON с RAM, совместимой с выбранной материнской платой.
+    """
+    motherboard_id = request.GET.get('motherboard_id')
+    if motherboard_id:
+        try:
+            motherboard = Motherboard.objects.get(pk=motherboard_id)
+            # Получаем RAM с тем же типом и поддерживаемой частотой, что и у материнской платы
+            compatible_rams = RAM.objects.filter(
+                ram_type=motherboard.ram_type,
+                memory_clock__lte=motherboard.max_ram_speed
+            ).values('id', 'name')
+            return JsonResponse(list(compatible_rams), safe=False)
+        except Motherboard.DoesNotExist:
+            return JsonResponse({'error': 'Motherboard не найдена'}, status=404)
+    else:
+        return JsonResponse({'error': 'Не указан Motherboard ID'}, status=400)
+
+
+def get_compatible_cpu(request):
+    """
+    Возвращает JSON с CPU, совместимыми с выбранной материнской платой.
+    """
+    motherboard_id = request.GET.get('motherboard_id')
+    if motherboard_id:
+        try:
+            motherboard = Motherboard.objects.get(pk=motherboard_id)
+            # Получаем CPU с тем же сокетом, что и у материнской платы
+            compatible_cpus = CPU.objects.filter(socket=motherboard.socket).values('id', 'name')
+            return JsonResponse(list(compatible_cpus), safe=False)
+        except Motherboard.DoesNotExist:
+            return JsonResponse({'error': 'Motherboard не найдена'}, status=404)
+    else:
+        return JsonResponse({'error': 'Не указан Motherboard ID'}, status=400)

@@ -48,9 +48,8 @@ class Build(models.Model):
 
 class CartItem(models.Model):
     """Элемент в корзине."""
-    build = models.ForeignKey(Build, null=True, blank=True, on_delete=models.CASCADE)
-    item_type = models.CharField(max_length=50)
-    quantity = models.PositiveIntegerField(default=1)
+    build = models.ForeignKey(Build, null=True, blank=True, on_delete=models.CASCADE, verbose_name="Сборка")
+    quantity = models.PositiveIntegerField(default=1, verbose_name="Количество")
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Пользователь")
     cpu = models.ForeignKey(CPU, on_delete=models.CASCADE, verbose_name="Процессор", blank=True, null=True)
     gpu = models.ForeignKey(GPU, on_delete=models.CASCADE, verbose_name="Видеокарта", blank=True, null=True)
@@ -60,7 +59,6 @@ class CartItem(models.Model):
     psu = models.ForeignKey(PSU, on_delete=models.CASCADE, verbose_name="Блок питания", blank=True, null=True)
     case = models.ForeignKey(Case, on_delete=models.CASCADE, verbose_name="Корпус", blank=True, null=True)
     cooler = models.ForeignKey(Cooler, on_delete=models.CASCADE, verbose_name="Охлаждение", blank=True, null=True)
-    quantity = models.PositiveIntegerField(default=1, verbose_name="Количество")
 
     def __str__(self):
         if self.build:
@@ -87,7 +85,7 @@ class CartItem(models.Model):
     def get_total_price(self):
         price = 0
         if self.build:
-            price = self.build.total_price * self.quantity
+            price = self.build.total_price
         elif self.cpu:
             price = self.cpu.price
         elif self.gpu:
@@ -177,6 +175,23 @@ class OrderItem(models.Model):
     item = models.CharField(max_length=255, verbose_name="Наименование товара")
     quantity = models.PositiveIntegerField(default=1, verbose_name="Количество")
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Цена")
+    component_type = models.CharField(
+        max_length=50,
+        choices=[
+            ('cpu', 'Процессор'),
+            ('gpu', 'Видеокарта'),
+            ('motherboard', 'Материнская плата'),
+            ('ram', 'Оперативная память'),
+            ('storage', 'Накопитель'),
+            ('psu', 'Блок питания'),
+            ('case', 'Корпус'),
+            ('cooler', 'Охлаждение'),
+        ],
+        verbose_name="Тип компонента",
+        blank=True,
+        null=True,
+    )
+    component_id = models.PositiveIntegerField(verbose_name="ID компонента", blank=True, null=True)
 
     def __str__(self):
         return f"{self.item} x {self.quantity} в заказе #{self.order.pk}"

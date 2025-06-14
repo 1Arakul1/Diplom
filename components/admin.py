@@ -1,7 +1,8 @@
 # components/admin.py
+# components/admin.py
 from django.contrib import admin
-from .models import Manufacturer, CPU, GPU, Motherboard, RAM, Storage, PSU, Case, Build, Cooler
-from .forms import CPUForm, GPUForm, MotherboardForm, RAMForm, StorageForm, PSUForm, CaseForm
+from .models import Manufacturer, CPU, GPU, Motherboard, RAM, Storage, PSU, Case, Build, Cooler, Stock
+from .forms import CPUForm, GPUForm, MotherboardForm, RAMForm, StorageForm, PSUForm, CaseForm # Удалили Stock
 
 @admin.register(Manufacturer)
 class ManufacturerAdmin(admin.ModelAdmin):
@@ -76,3 +77,24 @@ class CoolerAdmin(admin.ModelAdmin):
     list_display = ('manufacturer', 'model', 'cooler_type', 'fan_size', 'price', 'image')
     list_filter = ('manufacturer', 'cooler_type')
     search_fields = ('model', 'manufacturer__name')
+
+def replenish_stock(modeladmin, request, queryset):
+    """Action для пополнения запасов."""
+    for stock_item in queryset:
+        stock_item.quantity += 10  # Например, пополняем на 10 штук
+        stock_item.save()
+replenish_stock.short_description = "Пополнить запас выбранных элементов на 10"
+
+def reduce_stock(modeladmin, request, queryset):
+    """Action для уменьшения запасов."""
+    for stock_item in queryset:
+        stock_item.quantity -= 10  # Например, уменьшаем на 10 штук
+        stock_item.save()
+reduce_stock.short_description = "Уменьшить запас выбранных элементов на 10"
+
+@admin.register(Stock)
+class StockAdmin(admin.ModelAdmin):
+    list_display = ('component_type', 'get_component_name', 'quantity')
+    list_filter = ('component_type',)
+    search_fields = ('component_type', 'component_id')
+    actions = [replenish_stock, reduce_stock] # Добавляем actions

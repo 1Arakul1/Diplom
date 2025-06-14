@@ -12,7 +12,8 @@ urlpatterns = [
     path('', views.index, name='index'),  # Добавь этот путь
     path('components/', include('components.urls', namespace='components')),  # Раскомментируй и проверь
     path('builds/', include('builds.urls', namespace='builds')),  # Раскомментируй и проверь
-    path('games/', include('games.urls', namespace='games')), # <--- Важно!
+    path('games/', include('games.urls', namespace='games')),
+      # <--- Важно!
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

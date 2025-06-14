@@ -258,3 +258,57 @@ class Cooler(models.Model):
         # Добавьте логику проверки (например, сокет, TDP и т.д.)
         return True #  Заглушка
 
+class Stock(models.Model):
+    """Модель для учета складских запасов компонентов."""
+
+    COMPONENT_TYPE_CHOICES = [
+        ('cpu', 'Процессор'),
+        ('gpu', 'Видеокарта'),
+        ('motherboard', 'Материнская плата'),
+        ('ram', 'Оперативная память'),
+        ('storage', 'Накопитель'),
+        ('psu', 'Блок питания'),
+        ('case', 'Корпус'),
+        ('cooler', 'Охлаждение'),
+    ]
+
+    component_type = models.CharField(
+        max_length=50,
+        choices=COMPONENT_TYPE_CHOICES,
+        verbose_name="Тип компонента",
+    )
+    component_id = models.PositiveIntegerField(verbose_name="ID компонента")
+    quantity = models.PositiveIntegerField(default=0, verbose_name="Количество")
+
+    def __str__(self):
+        return f"{self.get_component_name()} - {self.quantity}"
+
+    def get_component_name(self):
+        """Возвращает имя компонента."""
+        component_model = {
+            'cpu': CPU,
+            'gpu': GPU,
+            'motherboard': Motherboard,
+            'ram': RAM,
+            'storage': Storage,
+            'psu': PSU,
+            'case': Case,
+            'cooler': Cooler,
+        }.get(self.component_type)
+
+        if component_model:
+            try:
+                component = component_model.objects.get(pk=self.component_id)
+                return f"{component.manufacturer} {component.model}"
+            except component_model.DoesNotExist:
+                return "Компонент не найден"
+        else:
+            return "Неизвестный тип компонента"
+
+    def get_component_type_display(self):
+           return dict(self.COMPONENT_TYPE_CHOICES).get(self.component_type, 'Unknown')
+
+    class Meta:
+        verbose_name = "Складской запас"
+        verbose_name_plural = "Складские запасы"
+        unique_together = ('component_type', 'component_id')  # Гарантирует уникальность записи для каждого компонента

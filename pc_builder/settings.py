@@ -57,29 +57,31 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'django.middleware.cache.UpdateCacheMiddleware', # ДОЛЖЕН БЫТЬ ПЕРВЫМ
+    'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'pc_builder.middleware.VaryCookieMiddleware',  # **Убедитесь, что он здесь**
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
-    'django.middleware.cache.FetchFromCacheMiddleware',  # ДОЛЖЕН БЫТЬ ПОСЛЕДНИМ
+    'django.middleware.cache.FetchFromCacheMiddleware',
 ]
 
 # settings.py
 
 ROOT_URLCONF = 'pc_builder.urls'  # Убедись, что это правильно!
 
+import os
+
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            BASE_DIR / 'templates',  # <--- Это строка важна. Должна указывать на вашу папку templates.
-        ],
+        'DIRS': [BASE_DIR / 'templates'],  # Важно! Укажите путь к директории с шаблонами
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -177,6 +179,13 @@ DEFAULT_FROM_EMAIL = 'niaz123rezeda123@ya.ru'  # От кого будут отп
 DEFAULT_CHARSET = 'utf-8'  # или 'utf-8'
 import logging
 logger = logging.getLogger(__name__)
+
+CACHE_MIDDLEWARE_IGNORE_PATHS = [
+    '/builds/cart/',
+    '/builds/add_to_cart/',  #  Удалит кэш для всех add_to_cart
+    '/builds/remove/', #  Удалит кэш для всех remove
+    # добавьте шаблоны для других страниц, связанных с корзиной
+]
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -281,3 +290,17 @@ def create_database():
 
 if __name__ == "__main__":
     create_database()
+
+
+CACHE_MIDDLEWARE_IGNORE_PATHS = [
+    '/builds/stock/'
+    '/builds/cart/',           # Страница корзины
+    '/builds/add_to_cart/',      # Добавление в корзину
+    '/builds/remove_from_cart/', # Удаление из корзины
+    '/users/login/',            # Страница логина
+    '/users/logout/',           # Страница выхода
+    '/users/register/',
+    '/components/stock_list/',
+    '/builds/create/'         # Страница регистрации
+    # ... другие URL-адреса, связанные с пользователем ...
+]
